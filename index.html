@@ -1,0 +1,843 @@
+<!--HEAD--><!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070708">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pulso">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<!--/HEAD-->
+<title>Pulso</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070708; --s1:#111114; --s2:#1a1a1e; --s3:#232328; --line:#2a2a30;
+  --tx:#f4f4f6; --mu:#8e8e98; --mu2:#5f5f68;
+  --red:#e3192b; --red2:#ff4252; --redbg:rgba(227,25,43,.14); --redline:rgba(227,25,43,.45);
+  --ok:#35c97f; --okbg:rgba(53,201,127,.13); --warn:#f5a524; --warnbg:rgba(245,165,36,.13);
+  --r:18px; --tabh:64px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx)}
+body{margin:0;font:15px/1.4 var(--font);min-height:100%;overscroll-behavior-y:none;-webkit-font-smoothing:antialiased}
+body.noscroll{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--red2);outline-offset:2px;border-radius:8px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(7,7,8,.82);
+  -webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);border-bottom:1px solid transparent}
+.top.scrolled{border-bottom-color:var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.brand svg{color:var(--red);width:24px;height:24px}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--tx);background:var(--s1)}
+.icon-btn:active{background:var(--s3)}
+main{padding:6px 16px calc(var(--tabh) + 96px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);
+  padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 4px);background:rgba(10,10,12,.88);
+  -webkit-backdrop-filter:saturate(160%) blur(20px);backdrop-filter:saturate(160%) blur(20px);border-top:1px solid var(--line)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--mu2);font-size:10.5px;font-weight:600;letter-spacing:.01em;position:relative}
+.tab.on{color:var(--tx)}
+.tab.on svg{color:var(--red)}
+.tab .dot{position:absolute;top:3px;left:calc(50% + 8px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--red);color:#fff;font-size:10px;line-height:16px;font-weight:700}
+.fab{position:fixed;z-index:31;right:18px;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 16px);width:58px;height:58px;border-radius:20px;
+  background:var(--red);color:#fff;display:grid;place-items:center;box-shadow:0 10px 30px rgba(227,25,43,.45),0 0 0 1px rgba(255,255,255,.08) inset}
+.fab svg{width:28px;height:28px;stroke-width:2.4}
+.fab:active{transform:scale(.94)}
+
+/* type */
+.hero{padding-top:6px}
+.hero .k{color:var(--red2);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.hero h1{margin:2px 0 0;font-size:40px;line-height:1.02;font-weight:800;letter-spacing:-.035em;text-wrap:balance}
+.hero p{margin:4px 0 0;color:var(--mu);font-size:16px}
+h2.sec{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+h2.sec button{font-size:13px;letter-spacing:0;text-transform:none;color:var(--red2);font-weight:600}
+.muted{color:var(--mu)}
+.small{font-size:13px}
+
+/* surfaces */
+.card{background:var(--s1);border-radius:var(--r);padding:14px}
+.list{background:var(--s1);border-radius:var(--r);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left;position:relative}
+.item + .item{border-top:1px solid var(--line)}
+button.item:active,.item.tap:active{background:var(--s2)}
+.item .main{flex:1;min-width:0}
+.item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .s{color:var(--mu);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .v{font-weight:700;text-align:right;white-space:nowrap}
+.time{width:48px;flex:none;font-weight:700;font-size:14px}
+.time small{display:block;color:var(--mu);font-weight:500;font-size:11px}
+.bar{width:4px;align-self:stretch;border-radius:2px;background:var(--red);flex:none}
+.bar.warn{background:var(--warn)} .bar.ok{background:var(--ok)} .bar.mu{background:var(--mu2)}
+.empty{padding:22px 14px;text-align:center;color:var(--mu);font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.pill.red{background:var(--redbg);color:var(--red2)} .pill.ok{background:var(--okbg);color:var(--ok)}
+.pill.warn{background:var(--warnbg);color:var(--warn)} .pill.mu{background:var(--s3);color:var(--mu)}
+.doc{font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:6px;border:1px solid var(--line);color:var(--mu)}
+.doc.cnpj{border-color:var(--redline);color:var(--red2)}
+.in{color:var(--ok)} .out{color:var(--tx)} .neg{color:var(--red2)}
+
+.banner{display:flex;gap:12px;align-items:center;padding:13px 14px;border-radius:var(--r);background:var(--s1);border:1px solid var(--line);width:100%;text-align:left}
+.banner.alert{background:linear-gradient(135deg,rgba(227,25,43,.22),rgba(227,25,43,.08));border-color:var(--redline)}
+.banner .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--redbg);color:var(--red2);flex:none}
+.banner b{display:block}
+.banner span{color:var(--mu);font-size:13px}
+.banner .x{margin-left:auto;color:var(--red2);font-weight:700;font-size:13px;white-space:nowrap}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--s1);border-radius:16px;padding:12px}
+.stat .l{font-size:11.5px;color:var(--mu);font-weight:600}
+.stat .n{font-size:17px;font-weight:800;letter-spacing:-.02em;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.big{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
+
+/* quick add */
+.qa{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:6px 6px 6px 14px}
+.qa:focus-within{border-color:var(--redline)}
+.qa input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:16px;padding:8px 0}
+.qa button{height:38px;padding:0 14px;border-radius:12px;background:var(--red);color:#fff;font-weight:700;font-size:14px}
+
+/* chips & seg */
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 13px;border-radius:999px;background:var(--s1);color:var(--mu);font-weight:600;font-size:13.5px;border:1px solid var(--line);white-space:nowrap}
+.chip.on{background:var(--tx);color:#000;border-color:var(--tx)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--s2);border-radius:12px;padding:3px;gap:3px}
+.seg label{position:relative;text-align:center}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;padding:9px 6px;border-radius:9px;font-weight:600;font-size:14px;color:var(--mu)}
+.seg input:checked + span{background:var(--s3);color:var(--tx);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.seg input:focus-visible + span{outline:2px solid var(--red2)}
+.seg.red input:checked + span{background:var(--red);color:#fff}
+
+/* month nav */
+.mnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mnav h3{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em;text-transform:capitalize}
+.mnav .navb{display:flex;gap:6px}
+
+/* calendar */
+.cal{background:var(--s1);border-radius:var(--r);padding:10px 8px}
+.cal .wd,.cal .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal .wd span{text-align:center;font-size:11px;font-weight:700;color:var(--mu2);padding-bottom:6px;text-transform:uppercase}
+.cal .d{aspect-ratio:1/1.05;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:12px;font-weight:600;font-size:15px;position:relative}
+.cal .d.out{color:var(--mu2)}
+.cal .d.today{color:var(--red2);font-weight:800}
+.cal .d.sel{background:var(--red);color:#fff}
+.cal .d:active{background:var(--s3)}
+.cal .dots{display:flex;gap:3px;height:5px}
+.cal .dots i{width:5px;height:5px;border-radius:50%;background:var(--red2)}
+.cal .dots i.w{background:var(--warn)} .cal .dots i.k{background:var(--ok)}
+.cal .d.sel .dots i{background:#fff}
+
+/* charts */
+.cols{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:120px;padding-top:6px}
+.col{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.col .pair{display:flex;gap:3px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.col .pair i{width:38%;max-width:14px;border-radius:4px 4px 2px 2px;background:var(--ok);min-height:2px}
+.col .pair i.o{background:var(--red)}
+.col.cur .pair i{box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.col span{font-size:11px;color:var(--mu);font-weight:600;text-transform:capitalize}
+.col.cur span{color:var(--tx)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mu);margin-top:10px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:var(--ok)}
+.legend i.o{background:var(--red)}
+.cats{display:flex;flex-direction:column;gap:11px}
+.catrow .h{display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px}
+.catrow .h b{font-weight:600}
+.track{height:8px;border-radius:4px;background:var(--s3);overflow:hidden}
+.track i{display:block;height:100%;border-radius:4px;background:var(--red)}
+.prog{height:6px;border-radius:3px;background:var(--s3);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--red);border-radius:3px}
+.prog.ok i{background:var(--ok)}
+
+.debt{display:block;width:100%;text-align:left;padding:14px}
+.debt + .debt{border-top:1px solid var(--line)}
+.debt:active{background:var(--s2)}
+.debt .r1{display:flex;align-items:center;gap:8px}
+.debt .r1 .t{font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.debt .r2{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:13px;color:var(--mu)}
+.debt .r2 b{color:var(--tx);font-weight:700}
+.debt .r2 > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.debt .r2 > span:last-child{white-space:nowrap}
+
+.grp{font-size:12px;font-weight:700;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;padding:14px 2px 6px}
+
+/* sheet */
+#layer{position:fixed;inset:0;z-index:50;display:none}
+#layer.on{display:block}
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:fade .2s ease}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--s1);border-radius:24px 24px 0 0;
+  padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 20px);animation:up .28s cubic-bezier(.2,.9,.3,1);max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--s3);margin:0 auto 2px;flex:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet-h h2{margin:0;font-size:21px;font-weight:800;letter-spacing:-.02em}
+.sheet .icon-btn{background:var(--s2);font-size:22px}
+.f{display:flex;flex-direction:column;gap:6px}
+.f > span{font-size:12.5px;font-weight:700;color:var(--mu);letter-spacing:.03em}
+.f input,.f select,.f textarea{width:100%;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;outline:0;min-height:46px;-webkit-appearance:none;appearance:none}
+.f select{background-image:linear-gradient(45deg,transparent 50%,var(--mu) 50%),linear-gradient(135deg,var(--mu) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--redline)}
+.f textarea{min-height:76px;resize:vertical}
+.f .err{color:var(--red2);font-size:12.5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.money-in{font-size:30px!important;font-weight:800;letter-spacing:-.02em;text-align:center}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{position:relative}
+.checks input{position:absolute;opacity:0;pointer-events:none}
+.checks span{display:block;padding:8px 12px;border-radius:999px;background:var(--s2);border:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--mu)}
+.checks input:checked + span{background:var(--redbg);border-color:var(--redline);color:var(--red2)}
+.checks input:focus-visible + span{outline:2px solid var(--red2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:14px;background:var(--s2);font-weight:700;font-size:16px;padding:0 16px;width:100%}
+.btn.primary{background:var(--red);color:#fff}
+.btn.ghost{background:none;color:var(--red2)}
+.btn.danger{background:var(--redbg);color:var(--red2)}
+.btn:active{opacity:.85}
+.btns{display:flex;flex-direction:column;gap:8px}
+.inst{display:flex;flex-direction:column}
+.inst .item{padding:11px 4px}
+.tick{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none}
+.tick.on{background:var(--ok);border-color:var(--ok);color:#000}
+.tick.late{border-color:var(--red)}
+.tick svg{width:16px;height:16px;stroke-width:3}
+
+/* modal & popup */
+.modal{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:24px}
+.modal .back{position:absolute;inset:0;background:rgba(0,0,0,.65);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fade .2s}
+.modal .box{position:relative;width:100%;max-width:360px;background:var(--s1);border-radius:22px;padding:22px 18px 16px;text-align:center;animation:pop .28s cubic-bezier(.2,1.2,.4,1)}
+.modal .box h3{margin:6px 0 4px;font-size:20px;letter-spacing:-.02em}
+.modal .box p{margin:0 0 16px;color:var(--mu)}
+.modal .box .pk{color:var(--red2);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.modal .box.rem{border:1px solid var(--redline);box-shadow:0 0 0 6px rgba(227,25,43,.08),0 20px 60px rgba(227,25,43,.25)}
+.modal .ring{width:58px;height:58px;margin:0 auto;border-radius:50%;display:grid;place-items:center;background:var(--redbg);color:var(--red2)}
+.modal .ring svg{width:28px;height:28px;animation:ring 1.2s ease-in-out 2}
+.modal .b2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* lock */
+#lock{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:calc(env(safe-area-inset-top,0px) + 20px) 24px calc(env(safe-area-inset-bottom,0px) + 20px)}
+#lock .logo{color:var(--red);width:44px;height:44px}
+#lock h2{margin:0;font-size:20px}
+.pdots{display:flex;gap:14px}
+.pdots i{width:13px;height:13px;border-radius:50%;border:2px solid var(--mu2)}
+.pdots i.on{background:var(--red);border-color:var(--red)}
+.pdots.shake{animation:shake .35s}
+.keys{display:grid;grid-template-columns:repeat(3,76px);gap:14px}
+.keys button{width:76px;height:76px;border-radius:50%;background:var(--s1);font-size:28px;font-weight:500;display:grid;place-items:center}
+.keys button:active{background:var(--s3)}
+.keys button.ghost{background:none;color:var(--mu)}
+
+#toast{position:fixed;left:50%;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 90px);transform:translateX(-50%) translateY(20px);z-index:95;
+  background:var(--tx);color:#000;padding:11px 16px;border-radius:14px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:calc(100% - 32px);text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.set .item .s{white-space:normal}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--mu)}
+.steps b{color:var(--tx)}
+
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{transform:scale(.9);opacity:0}}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (min-width:600px){.hero h1{font-size:48px}}
+</style>
+<!--HEAD-->
+</head>
+<body>
+<!--/HEAD-->
+<header class="top" id="top">
+  <div class="brand"><svg class="i" viewBox="0 0 24 24"><path d="M2 12h4l2.5-6 4 12 3-9 1.5 3H22"/></svg><span id="topTitle">Pulso</span></div>
+  <div style="display:flex;gap:8px">
+    <button class="icon-btn" data-act="toggleHide" id="eyeBtn" aria-label="Ocultar valores"></button>
+  </div>
+</header>
+<main id="view"></main>
+<button class="fab" data-act="addMenu" aria-label="Adicionar"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+<nav class="tabs" id="tabs"></nav>
+<div id="layer"></div>
+<div id="modal"></div>
+<div id="popup"></div>
+<div id="lock" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+/* ---------- utils ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const addMonths=(s,n)=>{const[y,m,d]=s.split('-').map(Number);const t=new Date(y,m-1+n,1);const last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();t.setDate(Math.min(d,last));return ymd(t)};
+const today=()=>ymd(new Date());
+const ym=s=>s.slice(0,7);
+const addYM=(s,n)=>addMonths(s+'-01',n).slice(0,7);
+const MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const DIA=['dom','seg','ter','qua','qui','sex','sáb'];
+const DIAF=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const fmtDay=s=>{const d=pd(s);return `${DIA[d.getDay()]}, ${d.getDate()} ${MES[d.getMonth()].slice(0,3)}`};
+const relDay=s=>{const t=today();if(s===t)return 'hoje';if(s===addDays(t,1))return 'amanhã';if(s===addDays(t,-1))return 'ontem';return fmtDay(s)};
+const monthName=s=>{const[y,m]=s.split('-').map(Number);return `${MES[m-1]} ${y}`};
+const BRL=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const money=v=>S.settings.hide?'R$ ••••':BRL.format(v||0);
+const fmtMin=m=>m>=1440?(m/1440)+(m===1440?' dia':' dias'):m>=60?(m/60)+' h':m+' min';
+const parseMoney=s=>{s=String(s||'').replace(/[^\d.,-]/g,'');if(!s)return NaN;if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if((s.match(/\./g)||[]).length>1||/\.\d{3}$/.test(s))s=s.replace(/\./g,'');return Math.round(parseFloat(s)*100)/100};
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+const inFrame=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+
+/* iOS 18+ haptic: tapping a <input switch> label triggers the Taptic Engine */
+const haptic=(()=>{let l;return()=>{try{if(!l){l=document.createElement('label');l.setAttribute('aria-hidden','true');l.style.cssText='position:fixed;left:-99px;top:0;opacity:0;pointer-events:none';const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');i.tabIndex=-1;l.appendChild(i);document.body.appendChild(l)}l.click()}catch(e){}}})();
+
+const ICON={
+ home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+ wallet:'<path d="M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zm0 0a2 2 0 0 1 2-2h12v4M16.5 14.5h.01"/>',
+ card:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+ more:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+ eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ eyeoff:'<path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.1 6.1C3.5 7.9 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1"/>',
+ bell:'<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+ left:'<path d="M15 18l-6-6 6-6"/>', right:'<path d="M9 18l6-6-6-6"/>',
+ alert:'<path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+ check:'<path d="M5 12l5 5L20 7"/>',
+ pulse:'<path d="M2 12h4l2.5-6 4 12 3-9 1.5 3H22"/>',
+ lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+ face:'<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0"/>',
+ phone:'<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
+ share:'<path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ bld:'<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2 21h20M8 7h4M8 11h4M8 15h4"/>',
+ trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+ spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>'
+};
+const I=(n,cls='')=>`<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+
+/* ---------- categories ---------- */
+const CAT_OUT=['Moradia','Mercado','Alimentação','Transporte','Saúde','Contas','Dívidas','Lazer','Educação','Compras','Impostos','Empresa','Outros'];
+const CAT_IN=['Salário','Pró-labore','Vendas','Serviços','Freelance','Investimentos','Outros'];
+const CAT_GUESS=[[/mercado|supermercado|feira|atacad/,'Mercado'],[/almo[cç]o|jantar|lanche|restaurante|ifood|caf[eé]|pizza|padaria/,'Alimentação'],[/uber|99|gasolina|combust[ií]vel|[oô]nibus|metr[oô]|estacionamento|ped[aá]gio/,'Transporte'],[/farm[aá]cia|m[eé]dico|dentista|rem[eé]dio|exame|consulta|plano de sa[uú]de/,'Saúde'],[/aluguel|condom[ií]nio|iptu/,'Moradia'],[/luz|energia|[aá]gua|internet|telefone|celular|g[aá]s|netflix|spotify|assinatura/,'Contas'],[/cinema|bar|show|viagem|passeio/,'Lazer'],[/curso|faculdade|escola|livro/,'Educação'],[/das|imposto|darf|simples/,'Impostos'],[/parcela|empr[eé]stimo|financiamento|fatura|cart[aã]o/,'Dívidas'],[/roupa|loja|shopping|amazon|mercado livre|shopee/,'Compras']];
+const guessCat=(t,type)=>{t=t.toLowerCase();if(type==='in'){if(/sal[aá]rio/.test(t))return 'Salário';if(/venda|vendi/.test(t))return 'Vendas';if(/pr[oó]-?labore/.test(t))return 'Pró-labore';if(/freela|job/.test(t))return 'Freelance';return 'Outros'}for(const[r,c]of CAT_GUESS)if(r.test(t))return c;return 'Outros'};
+
+/* ---------- CPF / CNPJ ---------- */
+const onlyD=s=>String(s||'').replace(/\D/g,'');
+function validCPF(c){c=onlyD(c);if(c.length!==11||/^(\d)\1+$/.test(c))return false;for(let t=9;t<11;t++){let s=0;for(let i=0;i<t;i++)s+=+c[i]*(t+1-i);if(((s*10)%11)%10!==+c[t])return false}return true}
+function validCNPJ(c){c=onlyD(c);if(c.length!==14||/^(\d)\1+$/.test(c))return false;const calc=n=>{let s=0,p=n-7;for(let i=0;i<n;i++){s+=+c[i]*p--;if(p<2)p=9}const r=s%11;return r<2?0:11-r};return calc(12)===+c[12]&&calc(13)===+c[13]}
+function maskDoc(v,type){const d=onlyD(v).slice(0,type==='CNPJ'?14:11);if(type==='CNPJ')return d.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
+const hideDoc=(doc,type)=>{if(!doc)return '';if(S.settings.hide)return type==='CNPJ'?'••.•••.•••/••••-••':'•••.•••.•••-••';return doc};
+
+/* ---------- state ---------- */
+const KEY='pulso.v1';
+let S;
+const DEF_SETTINGS={hide:false,alert:'both',evRemind:[60],debtRemind:[1440,0],allDayTime:'09:00',billTime:'09:00',payToTx:true,pinHash:null,faceCred:null,notifAsked:false};
+function seed(){
+  const t=today(),m=ym(t),now=Date.now();
+  const pCPF={id:uid(),type:'CPF',name:'Pessoal',doc:''},pCNPJ={id:uid(),type:'CNPJ',name:'Minha empresa',doc:''};
+  const d10=addMonths(m+'-10',-13),dGiro=addMonths(m+'-15',-5),dLuz=m+'-20';
+  const car={id:uid(),ex:true,name:'Financiamento do carro',creditor:'Banco (exemplo)',profileId:pCPF.id,n:48,value:890,first:d10,paid:[],remind:[4320,1440,0],alert:'both',notes:''};
+  for(let i=0;i<12;i++)car.paid.push(addMonths(d10,i)); // 13ª parcela fica atrasada
+  const giro={id:uid(),ex:true,name:'Capital de giro',creditor:'Banco (exemplo)',profileId:pCNPJ.id,n:24,value:1250,first:dGiro,paid:[],remind:[1440,0],alert:'both',notes:''};
+  for(let i=0;i<5;i++)if(addMonths(dGiro,i)<t)giro.paid.push(addMonths(dGiro,i));
+  const luz={id:uid(),ex:true,name:'Conta de luz',creditor:'Distribuidora (exemplo)',profileId:pCPF.id,n:0,value:210,first:dLuz,paid:[],remind:[1440,0],alert:'notif',notes:''};
+  const tx=(type,amount,cat,day,desc,p)=>({id:uid(),ex:true,type,amount,cat,date:`${m}-${pad(day)}`,desc,profileId:p.id});
+  const dd=Math.min(+t.slice(8),28);
+  return {v:1,createdAt:now,lastCheck:now,fired:{},snoozes:[],profiles:[pCPF,pCNPJ],
+    events:[
+      {id:uid(),ex:true,title:'Dentista',date:addDays(t,1),time:'15:00',location:'Clínica (exemplo)',repeat:'none',remind:[1440,60],alert:'both',notes:''},
+      {id:uid(),ex:true,title:'Reunião com o contador',date:addDays(t,3),time:'10:00',location:'',repeat:'none',remind:[60],alert:'notif',notes:'Levar notas fiscais'},
+      {id:uid(),ex:true,title:'Academia',date:t,time:'19:00',location:'',repeat:'weekly',remind:[30],alert:'popup',notes:''}
+    ],
+    tx:[tx('in',4500,'Salário',Math.min(5,dd),'Salário',pCPF),tx('in',3200,'Vendas',Math.min(3,dd),'Vendas da semana',pCNPJ),tx('out',1500,'Moradia',Math.min(5,dd),'Aluguel',pCPF),
+        tx('out',386.4,'Mercado',Math.min(6,dd),'Mercado do mês',pCPF),tx('out',220,'Transporte',Math.min(4,dd),'Gasolina',pCPF),tx('out',119.9,'Contas',Math.min(2,dd),'Internet',pCPF),
+        tx('out',540,'Impostos',Math.min(1,dd),'DAS Simples Nacional',pCNPJ),tx('out',62,'Alimentação',dd,'Almoço',pCPF)],
+    debts:[car,giro,luz],settings:{...DEF_SETTINGS}};
+}
+function normalize(){S.settings={...DEF_SETTINGS,...S.settings};for(const k of['profiles','events','tx','debts','snoozes'])S[k]=S[k]||[];S.fired=S.fired||{};for(const d of S.debts)d.paid=d.paid||[]}
+function load(){try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}if(!S||!S.v)S=seed();normalize()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Não foi possível salvar neste navegador')}updateBadge()}
+const ui={tab:'home',calMonth:ym(today()),sel:today(),finMonth:ym(today()),finProf:'all',debtProf:'all'};
+try{const t=sessionStorage.getItem('pulso.tab');if(t)ui.tab=t}catch(e){}
+const prof=id=>S.profiles.find(p=>p.id===id);
+const docTag=id=>{const p=prof(id);if(!p)return '';return `<span class="doc ${p.type==='CNPJ'?'cnpj':''}">${p.type}</span>`};
+
+/* ---------- domain ---------- */
+function occursOn(ev,d){if(d<ev.date)return false;if(ev.until&&d>ev.until)return false;switch(ev.repeat){case 'daily':return true;case 'weekly':return pd(d).getDay()===pd(ev.date).getDay();case 'monthly':return d.slice(8)===ev.date.slice(8);case 'yearly':return d.slice(5)===ev.date.slice(5);default:return d===ev.date}}
+const eventsOn=d=>S.events.filter(e=>occursOn(e,d)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+function debtInfo(d){
+  const t=today(),hz=addDays(t,62),n=+d.n||0,paid=new Set(d.paid||[]),list=[];
+  for(let i=0;i<(n||600);i++){const due=addMonths(d.first,i);if(!n&&due>hz)break;list.push({i:i+1,due,paid:paid.has(due)})}
+  let overdue=[],next=null,paidCount=0;
+  for(const x of list){if(x.paid)paidCount++;else if(x.due<t)overdue.push(x);else if(!next)next=x}
+  const remaining=n?(n-paidCount)*d.value:overdue.length*d.value;
+  const done=n>0&&paidCount>=n;
+  let status='ok',label='Em dia';
+  if(done){status='ok';label='Quitada'}else if(overdue.length){status='red';label=overdue.length>1?`${overdue.length} atrasadas`:'Atrasada'}
+  else if(next&&next.due<=addDays(t,3)){status='warn';label=next.due===t?'Vence hoje':'Vence em breve'}
+  return {list,overdue,next,paidCount,remaining,n,done,status,label};
+}
+function duesOn(day){const r=[];for(const d of S.debts){for(const x of debtInfo(d).list)if(x.due===day)r.push({d,x})}return r}
+function monthTx(m,p='all'){return S.tx.filter(x=>ym(x.date)===m&&(p==='all'||x.profileId===p))}
+function sums(list){let i=0,o=0;for(const x of list)x.type==='in'?i+=x.amount:o+=x.amount;return {i,o,b:i-o}}
+function profileTotals(){return S.profiles.map(p=>{let rem=0,month=0,late=0;for(const d of S.debts.filter(d=>d.profileId===p.id)){const f=debtInfo(d);if(f.done)continue;rem+=f.remaining;month+=d.value;late+=f.overdue.length}return {p,rem,month,late}})}
+
+/* ---------- reminders ---------- */
+function collectReminders(from,to){
+  const res=[],t0=ymd(new Date(from-3*864e5)),t1=ymd(new Date(to+8*864e5));
+  const at=(day,time)=>{const b=pd(day);const[h,m]=(time||'09:00').split(':');b.setHours(+h,+m,0,0);return b.getTime()};
+  for(const ev of S.events){for(let d=t0;d<=t1;d=addDays(d,1)){if(!occursOn(ev,d))continue;const base=at(d,ev.time||S.settings.allDayTime);
+    for(const m of ev.remind||[]){const a=base-m*60000;if(a>from&&a<=to)res.push({key:`e|${ev.id}|${d}|${m}`,at:a,alert:ev.alert||S.settings.alert,title:ev.title,body:`${m?'Em '+fmtMin(m)+' · ':''}${relDay(d)}${ev.time?' às '+ev.time:''}${ev.location?' · '+ev.location:''}`,go:'agenda',day:d})}}}
+  for(const d of S.debts){const f=debtInfo(d);for(const x of f.list){if(x.paid||x.due<t0||x.due>t1)continue;const base=at(x.due,S.settings.billTime);
+    for(const m of d.remind||[]){const a=base-m*60000;if(a>from&&a<=to)res.push({key:`d|${d.id}|${x.due}|${m}`,at:a,alert:d.alert||S.settings.alert,title:`${d.name}${f.n?` · parcela ${x.i}/${f.n}`:''}`,body:`${money(d.value)} vence ${relDay(x.due)}`,go:'debts',debt:d.id})}}}
+  for(const s of S.snoozes)if(s.at>from&&s.at<=to)res.push(s);
+  return res.sort((a,b)=>a.at-b.at);
+}
+const canNotify=()=>'Notification' in window&&Notification.permission==='granted';
+async function notify(title,body,tag){try{if(!canNotify())return false;const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg){await reg.showNotification(title,{body,tag,icon:'icon-192.png',badge:'icon-192.png'});return true}new Notification(title,{body,tag});return true}catch(e){return false}}
+const popQ=[];
+function check(){
+  const now=Date.now(),from=Math.max(S.lastCheck||now,now-12*3600e3);
+  const items=collectReminders(from,now).filter(x=>!S.fired[x.key]);
+  S.lastCheck=now;
+  for(const x of items)S.fired[x.key]=x.at;
+  S.snoozes=S.snoozes.filter(s=>s.at>now);
+  for(const k in S.fired)if(S.fired[k]<now-4*864e5)delete S.fired[k];
+  save();
+  if(!items.length)return;
+  for(const x of items){
+    const late=now-x.at>5*60000;
+    const wantN=x.alert!=='popup',wantP=x.alert!=='notif'||!canNotify();
+    if(wantN)notify(x.title,(late?'(enquanto o app estava fechado) ':'')+x.body,x.key);
+    if(wantP)popQ.push({...x,late});
+  }
+  showPopup();
+}
+function showPopup(){
+  const P=$('#popup');if(P.innerHTML||!popQ.length||document.hidden)return;
+  const x=popQ[0];
+  P.innerHTML=`<div class="modal" role="alertdialog" aria-labelledby="popT"><div class="back"></div><div class="box rem">
+    <div class="ring">${I('bell')}</div><div class="pk" style="margin-top:12px">${x.late?'Lembrete perdido':'Lembrete'}${popQ.length>1?` · 1 de ${popQ.length}`:''}</div>
+    <h3 id="popT">${esc(x.title)}</h3><p>${esc(x.body)}</p>
+    <div class="b2"><button class="btn" data-act="snooze">Adiar 10 min</button><button class="btn primary" data-act="popOk">Ok</button></div>
+    ${x.go?`<button class="btn ghost" data-act="popGo" style="margin-top:6px">Abrir</button>`:''}</div></div>`;
+}
+function updateBadge(){try{if(!('setAppBadge' in navigator))return;const t=today();let n=eventsOn(t).length;for(const d of S.debts){const f=debtInfo(d);n+=f.overdue.length+(f.next&&f.next.due===t?1:0)}n?navigator.setAppBadge(n):navigator.clearAppBadge()}catch(e){}}
+
+/* ---------- toast / modal / sheet ---------- */
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400)}
+let confirmFn=null;
+function confirmBox(title,msg,label,fn){confirmFn=fn;$('#modal').innerHTML=`<div class="modal" role="alertdialog" aria-labelledby="cfT"><div class="back" data-act="cfNo"></div><div class="box">
+  <h3 id="cfT">${esc(title)}</h3><p>${esc(msg)}</p><div class="b2"><button class="btn" data-act="cfNo">Cancelar</button><button class="btn primary" data-act="cfYes">${esc(label)}</button></div></div></div>`}
+let sheetSubmit=null;
+function sheet(title,body,onSubmit,onOpen){
+  const L=$('#layer');
+  L.innerHTML=`<div class="backdrop" data-act="closeSheet"></div><form class="sheet" id="sf" novalidate autocomplete="off"><div class="grab"></div>
+    <div class="sheet-h"><h2>${title}</h2><button type="button" class="icon-btn" data-act="closeSheet" aria-label="Fechar">×</button></div>${body}</form>`;
+  L.classList.add('on');document.body.classList.add('noscroll');sheetSubmit=onSubmit;
+  const f=$('#sf');f.addEventListener('submit',e=>{e.preventDefault();if(!sheetSubmit||sheetSubmit(new FormData(f),f)!==false){haptic();closeSheet()}});
+  onOpen&&onOpen(f);
+}
+function closeSheet(){const L=$('#layer');L.classList.remove('on');L.innerHTML='';document.body.classList.remove('noscroll');sheetSubmit=null}
+const seg=(name,opts,val,cls='')=>`<div class="seg ${cls}" role="radiogroup">${opts.map(([v,l])=>`<label><input type="radio" name="${name}" value="${v}" ${String(v)===String(val)?'checked':''}><span>${l}</span></label>`).join('')}</div>`;
+const checks=(name,opts,vals)=>`<div class="checks">${opts.map(([v,l])=>`<label><input type="checkbox" name="${name}" value="${v}" ${vals.includes(v)?'checked':''}><span>${l}</span></label>`).join('')}</div>`;
+const profOpts=sel=>S.profiles.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${p.type} · ${esc(p.name)}</option>`).join('');
+const ALERTS=[['notif','Notificação'],['popup','Pop-up'],['both','Os dois']];
+const EV_REM=[[0,'Na hora'],[10,'10 min'],[30,'30 min'],[60,'1 h'],[120,'2 h'],[1440,'1 dia'],[2880,'2 dias']];
+const DEBT_REM=[[0,'No dia'],[1440,'1 dia antes'],[4320,'3 dias antes'],[10080,'7 dias antes']];
+
+/* ---------- views ---------- */
+const TABS=[['home','Início','home'],['agenda','Agenda','cal'],['fin','Finanças','wallet'],['debts','Dívidas','card'],['more','Mais','more']];
+function renderTabs(){let late=0;for(const d of S.debts)late+=debtInfo(d).overdue.length;
+  $('#tabs').innerHTML=TABS.map(([k,l,i])=>`<button class="tab ${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}" aria-label="${l}">${I(i)}<span>${l}</span>${k==='debts'&&late?`<b class="dot">${late}</b>`:''}</button>`).join('')}
+function render(){
+  renderTabs();
+  $('#eyeBtn').innerHTML=I(S.settings.hide?'eyeoff':'eye');
+  $('#topTitle').textContent=ui.tab==='home'?'Pulso':TABS.find(t=>t[0]===ui.tab)[1];
+  $('#view').innerHTML=({home:vHome,agenda:vAgenda,fin:vFin,debts:vDebts,more:vMore})[ui.tab]();
+}
+function evItem(e,d){return `<button class="item" data-act="editEvent" data-id="${e.id}"><div class="time num">${e.time||'Dia'}<small>${e.time?'':'todo'}</small></div><div class="bar"></div>
+  <div class="main"><div class="t">${esc(e.title)}</div><div class="s">${[e.location,e.repeat!=='none'?({daily:'Todo dia',weekly:'Toda semana',monthly:'Todo mês',yearly:'Todo ano'})[e.repeat]:'',d&&d!==today()?relDay(d):''].filter(Boolean).map(esc).join(' · ')||'Compromisso'}</div></div></button>`}
+function dueItem(d,x,showDay){const f=debtInfo(d);const late=!x.paid&&x.due<today();return `<button class="item" data-act="openDebt" data-id="${d.id}"><div class="bar ${x.paid?'ok':late?'':'warn'}"></div>
+  <div class="main"><div class="t">${esc(d.name)} ${docTag(d.profileId)}</div><div class="s">${f.n?`Parcela ${x.i}/${f.n} · `:''}${x.paid?'Paga':late?'Venceu '+relDay(x.due):'Vence '+(showDay?relDay(x.due):'neste dia')}</div></div>
+  <div class="v num ${late?'neg':''}">${money(d.value)}</div></button>`}
+
+function vHome(){
+  const t=today(),d=new Date(),h=d.getHours();
+  const greet=h<5?'Boa noite':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+  const evs=eventsOn(t);
+  const late=[],soon=[];
+  for(const db of S.debts){const f=debtInfo(db);for(const x of f.overdue)late.push({d:db,x});for(const x of f.list)if(!x.paid&&x.due>=t&&x.due<=addDays(t,7))soon.push({d:db,x})}
+  soon.sort((a,b)=>a.x.due.localeCompare(b.x.due));
+  const lateSum=late.reduce((s,a)=>s+a.d.value,0);
+  const m=sums(monthTx(ym(t)));
+  const hasEx=S.events.some(e=>e.ex)||S.tx.some(e=>e.ex)||S.debts.some(e=>e.ex);
+  const tomorrow=eventsOn(addDays(t,1));
+  let html=`<section class="hero"><div class="k">${greet}</div><h1>${DIAF[d.getDay()]}, ${d.getDate()} de ${MES[d.getMonth()]}</h1>
+    <p>${evs.length?`${evs.length} compromisso${evs.length>1?'s':''} hoje`:'Nenhum compromisso hoje'}${soon.length?` · ${soon.length} vencimento${soon.length>1?'s':''} na semana`:''}</p></section>`;
+  html+=`<form class="qa" id="qa"><input id="qaIn" enterkeyhint="go" placeholder='"dentista amanhã 15h" ou "gastei 45 almoço"' aria-label="Adicionar rápido"><button type="submit">Criar</button></form>`;
+  if(hasEx)html+=`<div class="banner"><div class="ic">${I('spark')}</div><div><b>Você está vendo exemplos</b><span>Toque para apagar e começar com seus dados.</span></div><button class="x" data-act="clearEx">Apagar</button></div>`;
+  if(isIOS&&!standalone()&&!inFrame)html+=`<button class="banner" data-act="installHelp"><div class="ic">${I('phone')}</div><div><b>Instale na Tela de Início</b><span>Libera notificações, Face ID e modo tela cheia.</span></div><span class="x">Como?</span></button>`;
+  else if('Notification' in window&&Notification.permission==='default')html+=`<button class="banner" data-act="enableNotif"><div class="ic">${I('bell')}</div><div><b>Ativar notificações</b><span>Para receber os lembretes de compromissos e contas.</span></div><span class="x">Ativar</span></button>`;
+  if(late.length)html+=`<button class="banner alert" data-act="tab" data-tab="debts"><div class="ic">${I('alert')}</div><div><b>${late.length} conta${late.length>1?'s':''} em atraso</b><span class="num">${money(lateSum)} vencido</span></div><span class="x">Ver</span></button>`;
+  html+=`<section><h2 class="sec">Hoje <button data-act="tab" data-tab="agenda">Agenda</button></h2><div class="list">${evs.map(e=>evItem(e)).join('')||'<div class="empty">Dia livre. Toque em + para agendar.</div>'}</div>
+    ${tomorrow.length?`<p class="small muted" style="margin:8px 2px 0">Amanhã: ${tomorrow.map(e=>esc((e.time?e.time+' ':'')+e.title)).join(' · ')}</p>`:''}</section>`;
+  html+=`<section><h2 class="sec">Vencimentos · 7 dias <button data-act="tab" data-tab="debts">Dívidas</button></h2><div class="list">${soon.map(a=>dueItem(a.d,a.x,true)).join('')||'<div class="empty">Nada vence nos próximos 7 dias.</div>'}</div></section>`;
+  html+=`<section><h2 class="sec">${MES[d.getMonth()]} <button data-act="tab" data-tab="fin">Finanças</button></h2><div class="stats num">
+    <div class="stat"><div class="l">Entradas</div><div class="n in">${money(m.i)}</div></div><div class="stat"><div class="l">Saídas</div><div class="n">${money(m.o)}</div></div>
+    <div class="stat"><div class="l">Saldo</div><div class="n ${m.b<0?'neg':''}">${money(m.b)}</div></div></div></section>`;
+  const pt=profileTotals().filter(x=>x.rem||x.month);
+  if(pt.length)html+=`<section><h2 class="sec">Dívidas por documento</h2><div class="list">${pt.map(x=>`<button class="item" data-act="debtsOf" data-id="${x.p.id}">${I(x.p.type==='CNPJ'?'bld':'user')}
+    <div class="main"><div class="t">${esc(x.p.name)} ${docTag(x.p.id)}</div><div class="s num">${money(x.month)}/mês${x.late?` · <span class="neg">${x.late} atrasada${x.late>1?'s':''}</span>`:''}</div></div><div class="v num">${money(x.rem)}</div></button>`).join('')}</div></section>`;
+  return html;
+}
+
+function vAgenda(){
+  const t=today(),[y,mo]=ui.calMonth.split('-').map(Number);
+  const first=new Date(y,mo-1,1),start=addDays(ymd(first),-first.getDay());
+  let cells='';
+  for(let i=0;i<42;i++){const d=addDays(start,i);const ev=eventsOn(d).length,du=duesOn(d);const unpaid=du.filter(a=>!a.x.paid).length,paid=du.length-unpaid;
+    if(i===35&&ym(d)!==ui.calMonth)break;
+    cells+=`<button class="d ${ym(d)!==ui.calMonth?'out':''} ${d===t?'today':''} ${d===ui.sel?'sel':''}" data-act="selDay" data-d="${d}" aria-label="${fmtDay(d)}"><span class="num">${+d.slice(8)}</span>
+      <span class="dots">${ev?'<i></i>':''}${unpaid?'<i class="w"></i>':''}${paid&&!unpaid?'<i class="k"></i>':''}</span></button>`}
+  const evs=eventsOn(ui.sel),du=duesOn(ui.sel);
+  return `<div class="mnav"><h3>${monthName(ui.calMonth)}</h3><div class="navb"><button class="icon-btn" data-act="calMonth" data-n="-1" aria-label="Mês anterior">${I('left')}</button>
+    <button class="icon-btn" data-act="calToday" aria-label="Hoje" style="width:auto;padding:0 12px;font-weight:700;font-size:14px">Hoje</button><button class="icon-btn" data-act="calMonth" data-n="1" aria-label="Próximo mês">${I('right')}</button></div></div>
+    <div class="cal"><div class="wd">${DIA.map(d=>`<span>${d}</span>`).join('')}</div><div class="grid">${cells}</div></div>
+    <div class="legend"><span><i class="o"></i>Compromisso</span><span><i style="background:var(--warn)"></i>Vencimento</span><span><i></i>Pago</span></div>
+    <section><h2 class="sec">${relDay(ui.sel)==='hoje'?'Hoje':relDay(ui.sel)==='amanhã'?'Amanhã':fmtDay(ui.sel)} <button data-act="newEvent" data-d="${ui.sel}">+ Compromisso</button></h2>
+    <div class="list">${evs.map(e=>evItem(e)).join('')}${du.map(a=>dueItem(a.d,a.x)).join('')}${!evs.length&&!du.length?'<div class="empty">Nada neste dia.</div>':''}</div></section>
+    <button class="btn" data-act="exportAllIcs">${I('cal')} Enviar agenda para o Calendário do iPhone</button>
+    <p class="small muted" style="margin:-8px 2px 0">Os alarmes do Calendário do iPhone tocam mesmo com o Pulso fechado.</p>`;
+}
+
+function vFin(){
+  const m=ui.finMonth,p=ui.finProf,list=monthTx(m,p).sort((a,b)=>b.date.localeCompare(a.date)||0),s=sums(list);
+  const months=[...Array(6)].map((_,i)=>addYM(m,i-5));const ms=months.map(x=>sums(monthTx(x,p)));const mx=Math.max(1,...ms.map(x=>Math.max(x.i,x.o)));
+  const cat={};for(const x of list)if(x.type==='out')cat[x.cat]=(cat[x.cat]||0)+x.amount;
+  const cats=Object.entries(cat).sort((a,b)=>b[1]-a[1]);const cmax=cats.length?cats[0][1]:1;
+  const groups={};for(const x of list)(groups[x.date]=groups[x.date]||[]).push(x);
+  return `<div class="mnav"><h3>${monthName(m)}</h3><div class="navb"><button class="icon-btn" data-act="finMonth" data-n="-1" aria-label="Mês anterior">${I('left')}</button><button class="icon-btn" data-act="finMonth" data-n="1" aria-label="Próximo mês">${I('right')}</button></div></div>
+  <div class="chips"><button class="chip ${p==='all'?'on':''}" data-act="finProf" data-id="all">Tudo</button>${S.profiles.map(x=>`<button class="chip ${p===x.id?'on':''}" data-act="finProf" data-id="${x.id}">${x.type} · ${esc(x.name)}</button>`).join('')}</div>
+  <div class="card"><div class="small muted">Saldo do mês</div><div class="big num ${s.b<0?'neg':''}">${money(s.b)}</div>
+    <div style="display:flex;gap:18px;margin-top:8px" class="num small"><span class="muted">Entradas <b class="in">${money(s.i)}</b></span><span class="muted">Saídas <b style="color:var(--tx)">${money(s.o)}</b></span></div></div>
+  <section><h2 class="sec">Últimos 6 meses</h2><div class="card"><div class="cols">${ms.map((x,i)=>`<div class="col ${months[i]===m?'cur':''}"><div class="pair"><i style="height:${x.i/mx*100}%"></i><i class="o" style="height:${x.o/mx*100}%"></i></div><span>${MES[+months[i].slice(5)-1].slice(0,3)}</span></div>`).join('')}</div>
+    <div class="legend"><span><i></i>Entradas</span><span><i class="o"></i>Saídas</span></div></div></section>
+  ${cats.length?`<section><h2 class="sec">Gastos por categoria</h2><div class="card cats">${cats.map(([c,v])=>`<div class="catrow"><div class="h"><b>${esc(c)}</b><span class="num muted">${money(v)} · ${Math.round(v/s.o*100)}%</span></div><div class="track"><i style="width:${v/cmax*100}%"></i></div></div>`).join('')}</div></section>`:''}
+  <section><h2 class="sec">Lançamentos <button data-act="newTx" data-type="out">+ Lançar</button></h2>
+  ${Object.keys(groups).length?Object.entries(groups).map(([d,xs])=>`<div class="grp">${relDay(d)}</div><div class="list">${xs.map(x=>`<button class="item" data-act="editTx" data-id="${x.id}"><div class="main"><div class="t">${esc(x.desc||x.cat)} ${docTag(x.profileId)}</div><div class="s">${esc(x.cat)}</div></div><div class="v num ${x.type==='in'?'in':''}">${x.type==='in'?'+':'−'} ${money(x.amount)}</div></button>`).join('')}</div>`).join(''):'<div class="list"><div class="empty">Nenhum lançamento neste mês.</div></div>'}</section>`;
+}
+
+function vDebts(){
+  const p=ui.debtProf,ds=S.debts.filter(d=>p==='all'||d.profileId===p).map(d=>({d,f:debtInfo(d)}));
+  const rank={red:0,warn:1,ok:2};ds.sort((a,b)=>(a.f.done-b.f.done)||(rank[a.f.status]-rank[b.f.status])||((a.f.next?.due||'9')>(b.f.next?.due||'9')?1:-1));
+  let rem=0,month=0,late=0,lateV=0;for(const{d,f}of ds){if(f.done)continue;rem+=f.remaining;month+=d.value;late+=f.overdue.length;lateV+=f.overdue.length*d.value}
+  const active=ds.filter(x=>!x.f.done),done=ds.filter(x=>x.f.done);
+  const card=({d,f})=>`<button class="debt" data-act="openDebt" data-id="${d.id}"><div class="r1"><span class="t">${esc(d.name)}</span>${docTag(d.profileId)}<span class="pill ${f.status}">${f.label}</span></div>
+    <div class="r2"><span>${f.n?`${f.paidCount}/${f.n} pagas`:'Mensal'}${d.creditor?' · '+esc(d.creditor):''}</span><span class="num"><b>${money(d.value)}</b>${f.next?' · '+relDay(f.next.due):''}</span></div>
+    ${f.n?`<div class="prog ${f.done?'ok':''}"><i style="width:${f.paidCount/f.n*100}%"></i></div>`:''}</button>`;
+  return `<div class="chips"><button class="chip ${p==='all'?'on':''}" data-act="debtProf" data-id="all">Todos</button>${S.profiles.map(x=>`<button class="chip ${p===x.id?'on':''}" data-act="debtProf" data-id="${x.id}">${x.type} · ${esc(x.name)}</button>`).join('')}<button class="chip" data-act="newProfile">+ CPF/CNPJ</button></div>
+  <div class="card"><div class="small muted">Total em aberto${p!=='all'&&prof(p)?` · ${esc(prof(p).name)} ${hideDoc(prof(p).doc,prof(p).type)}`:''}</div><div class="big num">${money(rem)}</div>
+  <div style="display:flex;gap:18px;margin-top:8px;flex-wrap:wrap" class="num small"><span class="muted">Por mês <b style="color:var(--tx)">${money(month)}</b></span>${late?`<span class="muted">Atrasado <b class="neg">${money(lateV)}</b></span>`:'<span class="muted">Nada atrasado <b class="in">✓</b></span>'}</div></div>
+  <section><h2 class="sec">Ativas <button data-act="newDebt">+ Nova</button></h2><div class="list">${active.map(card).join('')||'<div class="empty">Nenhuma dívida ou conta cadastrada.</div>'}</div></section>
+  ${done.length?`<section><h2 class="sec">Quitadas</h2><div class="list">${done.map(card).join('')}</div></section>`:''}`;
+}
+
+function vMore(){
+  const st=S.settings;
+  const nState=!('Notification' in window)?(isIOS&&!standalone()?'Instale na Tela de Início primeiro':'Não suportado neste navegador'):Notification.permission==='granted'?'Ativadas':Notification.permission==='denied'?'Bloqueadas nos Ajustes do iPhone':'Desativadas';
+  const total=S.events.length+S.tx.length+S.debts.length;
+  return `<section><h2 class="sec">CPF e CNPJ <button data-act="newProfile">+ Adicionar</button></h2><div class="list">${S.profiles.map(p=>`<button class="item" data-act="editProfile" data-id="${p.id}">${I(p.type==='CNPJ'?'bld':'user')}<div class="main"><div class="t">${esc(p.name)} ${docTag(p.id)}</div><div class="s num">${hideDoc(p.doc,p.type)||'Documento não informado'}</div></div>${I('right')}</button>`).join('')}</div></section>
+  <section class="set"><h2 class="sec">Lembretes</h2><div class="list">
+    <button class="item" data-act="enableNotif">${I('bell')}<div class="main"><div class="t">Notificações</div><div class="s">${nState}</div></div>${I('right')}</button>
+    <button class="item" data-act="testRem">${I('spark')}<div class="main"><div class="t">Testar lembrete</div><div class="s">Dispara uma notificação e um pop-up agora</div></div></button>
+    <button class="item" data-act="remSettings">${I('clock')}<div class="main"><div class="t">Padrões de aviso</div><div class="s">${ALERTS.find(a=>a[0]===st.alert)[1]} · contas às ${st.billTime} · dia inteiro às ${st.allDayTime}</div></div>${I('right')}</button>
+  </div></section>
+  <section class="set"><h2 class="sec">Segurança e privacidade</h2><div class="list">
+    <button class="item" data-act="pinSetup">${I('lock')}<div class="main"><div class="t">Bloqueio com senha</div><div class="s">${st.pinHash?'Ativado':'Desativado'}</div></div>${I('right')}</button>
+    <button class="item" data-act="faceSetup">${I('face')}<div class="main"><div class="t">Face ID</div><div class="s">${st.faceCred?'Ativado':st.pinHash?'Desativado':'Crie uma senha primeiro'}</div></div>${I('right')}</button>
+    <button class="item" data-act="toggleHide">${I(st.hide?'eyeoff':'eye')}<div class="main"><div class="t">Ocultar valores</div><div class="s">${st.hide?'Valores escondidos':'Valores visíveis'} · também no ícone do olho</div></div></button>
+  </div></section>
+  <section class="set"><h2 class="sec">Dados no seu iPhone</h2><div class="list">
+    <button class="item" data-act="exportData">${I('share')}<div class="main"><div class="t">Fazer backup</div><div class="s">Salva um arquivo com tudo (${total} itens) no app Arquivos ou no iCloud Drive</div></div></button>
+    <button class="item" data-act="importData">${I('share','')}<div class="main"><div class="t">Restaurar backup</div><div class="s">Substitui os dados atuais pelo arquivo escolhido</div></div></button>
+    <button class="item" data-act="installHelp">${I('phone')}<div class="main"><div class="t">Instalar no iPhone</div><div class="s">${standalone()?'Instalado ✓':'Passo a passo'}</div></div>${I('right')}</button>
+    <button class="item" data-act="wipe">${I('trash')}<div class="main"><div class="t neg">Apagar todos os dados</div><div class="s">Não dá para desfazer</div></div></button>
+  </div></section>
+  <p class="small muted" style="text-align:center;margin:0">Pulso · seus dados ficam só neste aparelho</p>`;
+}
+
+/* ---------- forms ---------- */
+function eventForm(ev,preset={}){
+  const e=ev||{title:'',date:ui.tab==='agenda'?ui.sel:today(),time:'',location:'',repeat:'none',remind:[...S.settings.evRemind],alert:S.settings.alert,notes:'',...preset};
+  sheet(ev?'Editar compromisso':'Novo compromisso',`
+    <label class="f"><span>O quê</span><input name="title" value="${esc(e.title)}" placeholder="Ex.: Reunião, médico, aniversário" required></label>
+    <div class="row2"><label class="f"><span>Dia</span><input type="date" name="date" value="${e.date}" required></label><label class="f"><span>Hora (opcional)</span><input type="time" name="time" value="${e.time||''}"></label></div>
+    <label class="f"><span>Local</span><input name="location" value="${esc(e.location)}" placeholder="Opcional"></label>
+    <label class="f"><span>Repetir</span><select name="repeat">${[['none','Não repete'],['daily','Todo dia'],['weekly','Toda semana'],['monthly','Todo mês'],['yearly','Todo ano']].map(([v,l])=>`<option value="${v}" ${e.repeat===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    <div class="f"><span>Avisar antes</span>${checks('remind',EV_REM,e.remind||[])}</div>
+    <div class="f"><span>Tipo de aviso</span>${seg('alert',ALERTS,e.alert,'red')}</div>
+    <label class="f"><span>Observações</span><textarea name="notes" placeholder="Opcional">${esc(e.notes)}</textarea></label>
+    <div class="f err" id="ferr" hidden></div>
+    <div class="btns"><button class="btn primary" type="submit">Salvar</button>
+    ${ev?`<button class="btn" type="button" data-act="icsEvent" data-id="${ev.id}">${I('cal')} Adicionar ao Calendário do iPhone</button><button class="btn danger" type="button" data-act="delEvent" data-id="${ev.id}">Excluir</button>`:''}</div>`,
+  (fd,f)=>{const title=fd.get('title').trim();if(!title){f.title.focus();return false}
+    const o={title,date:fd.get('date')||today(),time:fd.get('time'),location:fd.get('location').trim(),repeat:fd.get('repeat'),remind:fd.getAll('remind').map(Number),alert:fd.get('alert'),notes:fd.get('notes').trim()};
+    if(ev){Object.assign(ev,o);delete ev.ex;for(const k in S.fired)if(k.startsWith('e|'+ev.id))delete S.fired[k]}else S.events.push({id:uid(),...o});
+    ui.sel=o.date;ui.calMonth=ym(o.date);save();render();toast(ev?'Compromisso atualizado':'Compromisso criado')});
+}
+function txForm(tx,preset={}){
+  const x=tx||{type:'out',amount:'',cat:'',date:today(),desc:'',profileId:(ui.finProf!=='all'&&ui.finProf)||S.profiles[0]?.id,...preset};
+  sheet(tx?'Editar lançamento':'Novo lançamento',`
+    ${seg('type',[['out','Despesa'],['in','Receita']],x.type,'red')}
+    <label class="f"><span>Valor</span><input name="amount" class="money-in num" inputmode="decimal" placeholder="R$ 0,00" value="${x.amount?String(x.amount.toFixed(2)).replace('.',','):''}" required></label>
+    <label class="f"><span>Descrição</span><input name="desc" value="${esc(x.desc)}" placeholder="Ex.: Mercado, salário"></label>
+    <div class="row2"><label class="f"><span>Categoria</span><select name="cat" id="catSel"></select></label><label class="f"><span>Data</span><input type="date" name="date" value="${x.date}"></label></div>
+    <label class="f"><span>CPF ou CNPJ</span><select name="profileId">${profOpts(x.profileId)}</select></label>
+    <div class="f err" id="ferr" hidden></div>
+    <div class="btns"><button class="btn primary" type="submit">Salvar</button>${tx?`<button class="btn danger" type="button" data-act="delTx" data-id="${tx.id}">Excluir</button>`:''}</div>`,
+  (fd,f)=>{const amount=parseMoney(fd.get('amount'));if(!(amount>0)){const e=$('#ferr');e.hidden=false;e.textContent='Digite um valor maior que zero, por exemplo 45,90.';f.amount.focus();return false}
+    const o={type:fd.get('type'),amount,cat:fd.get('cat'),date:fd.get('date')||today(),desc:fd.get('desc').trim(),profileId:fd.get('profileId')};
+    if(tx){Object.assign(tx,o);delete tx.ex}else S.tx.push({id:uid(),...o});ui.finMonth=ym(o.date);save();render();toast(tx?'Lançamento atualizado':(o.type==='in'?'Receita lançada':'Despesa lançada'))},
+  f=>{const fill=()=>{const t=f.querySelector('[name=type]:checked').value;const cs=t==='in'?CAT_IN:CAT_OUT;const cur=x.cat||guessCat(f.desc.value,t);f.cat.innerHTML=cs.map(c=>`<option ${c===cur?'selected':''}>${c}</option>`).join('')};
+    fill();f.querySelectorAll('[name=type]').forEach(r=>r.addEventListener('change',()=>{x.cat='';fill()}));
+    f.desc.addEventListener('blur',()=>{if(!tx&&!x.cat){const g=guessCat(f.desc.value,f.querySelector('[name=type]:checked').value);if([...f.cat.options].some(o=>o.value===g))f.cat.value=g}});
+    if(!tx)setTimeout(()=>f.amount.focus(),320)});
+}
+function debtForm(d){
+  const x=d||{name:'',creditor:'',profileId:(ui.debtProf!=='all'&&ui.debtProf)||S.profiles[0]?.id,n:12,value:'',first:today(),remind:[...S.settings.debtRemind],alert:S.settings.alert,notes:''};
+  const rec=d?!(+d.n):false;
+  sheet(d?'Editar dívida/conta':'Nova dívida ou conta',`
+    ${seg('kind',[['inst','Parcelada'],['rec','Conta mensal']],rec?'rec':'inst','red')}
+    <label class="f"><span>Nome</span><input name="name" value="${esc(x.name)}" placeholder="Ex.: Financiamento, cartão, luz" required></label>
+    <div class="row2"><label class="f"><span>Credor</span><input name="creditor" value="${esc(x.creditor)}" placeholder="Banco, loja…"></label><label class="f"><span>CPF ou CNPJ</span><select name="profileId">${profOpts(x.profileId)}</select></label></div>
+    <div class="row2"><label class="f"><span id="valL">Valor da parcela</span><input name="value" class="num" inputmode="decimal" placeholder="R$ 0,00" value="${x.value?String(x.value.toFixed(2)).replace('.',','):''}" required></label>
+    <label class="f"><span id="firstL">1º vencimento</span><input type="date" name="first" value="${x.first}" required></label></div>
+    <div class="row2" id="instRow"><label class="f"><span>Nº de parcelas</span><input name="n" type="number" inputmode="numeric" min="1" max="600" value="${+x.n||12}"></label>
+    ${d?'<div></div>':`<label class="f"><span>Já pagas</span><input name="already" type="number" inputmode="numeric" min="0" value="0"></label>`}</div>
+    <div class="f"><span>Avisar</span>${checks('remind',DEBT_REM,x.remind||[])}</div>
+    <div class="f"><span>Tipo de aviso</span>${seg('alert',ALERTS,x.alert,'red')}</div>
+    <label class="f"><span>Observações</span><textarea name="notes" placeholder="Contrato, juros, contato…">${esc(x.notes)}</textarea></label>
+    <div class="f err" id="ferr" hidden></div>
+    <div class="btns"><button class="btn primary" type="submit">Salvar</button>${d?`<button class="btn danger" type="button" data-act="delDebt" data-id="${d.id}">Excluir</button>`:''}</div>`,
+  (fd,f)=>{const err=m=>{const e=$('#ferr');e.hidden=false;e.textContent=m;return false};
+    const name=fd.get('name').trim();if(!name)return err('Dê um nome, por exemplo "Cartão Nubank".');
+    const value=parseMoney(fd.get('value'));if(!(value>0))return err('Digite o valor da parcela, por exemplo 350,00.');
+    const kind=fd.get('kind'),n=kind==='rec'?0:Math.max(1,Math.min(600,parseInt(fd.get('n'))||1));
+    const o={name,creditor:fd.get('creditor').trim(),profileId:fd.get('profileId'),n,value,first:fd.get('first')||today(),remind:fd.getAll('remind').map(Number),alert:fd.get('alert'),notes:fd.get('notes').trim()};
+    if(d){Object.assign(d,o);delete d.ex;for(const k in S.fired)if(k.startsWith('d|'+d.id))delete S.fired[k]}
+    else{const nd={id:uid(),...o,paid:[]};const k=Math.min(n||0,parseInt(fd.get('already'))||0);for(let i=0;i<k;i++)nd.paid.push(addMonths(nd.first,i));S.debts.push(nd)}
+    save();render();toast(d?'Atualizado':'Cadastrado')},
+  f=>{const sync=()=>{const rec=f.querySelector('[name=kind]:checked').value==='rec';$('#instRow').hidden=rec;$('#valL').textContent=rec?'Valor mensal':'Valor da parcela';$('#firstL').textContent=rec?'Próximo vencimento':'1º vencimento'};
+    sync();f.querySelectorAll('[name=kind]').forEach(r=>r.addEventListener('change',sync))});
+}
+function debtDetail(id){
+  const d=S.debts.find(x=>x.id===id);if(!d)return;const f=debtInfo(d),t=today(),p=prof(d.profileId);
+  let rows=f.list;if(!f.n){const idx=rows.findIndex(r=>r.due>=t);rows=rows.slice(Math.max(0,(idx<0?rows.length:idx)-6))}
+  const paidSum=f.paidCount*d.value;
+  sheet(esc(d.name),`
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${docTag(d.profileId)}<span class="small muted">${esc(p?.name||'')}${p?.doc?' · '+hideDoc(p.doc,p.type):''}</span><span class="pill ${f.status}">${f.label}</span></div>
+    <div class="card" style="background:var(--s2)"><div class="small muted">${f.n?'Falta pagar':'Valor mensal'}</div><div class="big num">${money(f.n?f.remaining:d.value)}</div>
+      <div class="small muted num" style="margin-top:6px">${f.n?`${f.paidCount} de ${f.n} pagas · ${money(paidSum)} pagos · parcela ${money(d.value)}`:`${f.overdue.length?`${f.overdue.length} em atraso · `:''}vence todo dia ${+d.first.slice(8)}`}${d.creditor?' · '+esc(d.creditor):''}</div>
+      ${f.n?`<div class="prog ${f.done?'ok':''}"><i style="width:${f.paidCount/f.n*100}%"></i></div>`:''}</div>
+    ${d.notes?`<p class="small muted" style="margin:0;white-space:pre-wrap">${esc(d.notes)}</p>`:''}
+    <div class="f"><span>${f.n?'Parcelas':'Meses'} · toque para marcar como paga</span><div class="inst">${rows.map(r=>{const late=!r.paid&&r.due<t;return `<button type="button" class="item" data-act="togglePaid" data-id="${d.id}" data-due="${r.due}">
+      <span class="tick ${r.paid?'on':late?'late':''}">${r.paid?I('check'):''}</span><div class="main"><div class="t">${f.n?`Parcela ${r.i}`:MES[+r.due.slice(5,7)-1].replace(/^./,c=>c.toUpperCase())}</div><div class="s ${late?'neg':''}">${r.paid?'Paga':late?'Atrasada · ':''}${r.paid?'':'vence '+relDay(r.due)}</div></div><div class="v num">${money(d.value)}</div></button>`}).join('')}</div></div>
+    <div class="btns"><button class="btn" type="button" data-act="editDebt" data-id="${d.id}">Editar</button><button class="btn" type="button" data-act="icsDebt" data-id="${d.id}">${I('cal')} Vencimentos no Calendário do iPhone</button></div>`,null,
+  fm=>{const late=fm.querySelector('.tick.late');const nx=late||fm.querySelector('.tick:not(.on)');if(nx&&f.n>12)setTimeout(()=>nx.scrollIntoView({block:'center',behavior:'smooth'}),350)});
+}
+function profileForm(p){
+  const x=p||{type:'CPF',name:'',doc:''};
+  sheet(p?'Editar documento':'Novo CPF ou CNPJ',`
+    ${seg('type',[['CPF','CPF · pessoa física'],['CNPJ','CNPJ · empresa']],x.type,'red')}
+    <label class="f"><span>Nome</span><input name="name" value="${esc(x.name)}" placeholder="Ex.: Pessoal, Loja, MEI" required></label>
+    <label class="f"><span>Número (opcional)</span><input name="doc" class="num" inputmode="numeric" value="${esc(x.doc)}" placeholder="${x.type==='CNPJ'?'00.000.000/0000-00':'000.000.000-00'}"></label>
+    <div class="f err" id="ferr" hidden></div>
+    <div class="btns"><button class="btn primary" type="submit">Salvar</button>${p?`<button class="btn danger" type="button" data-act="delProfile" data-id="${p.id}">Excluir</button>`:''}</div>`,
+  (fd)=>{const err=m=>{const e=$('#ferr');e.hidden=false;e.textContent=m;return false};const type=fd.get('type'),name=fd.get('name').trim(),doc=fd.get('doc').trim();
+    if(!name)return err('Dê um nome para identificar, por exemplo "Pessoal".');
+    if(doc&&!(type==='CPF'?validCPF(doc):validCNPJ(doc)))return err(`Esse ${type} não é válido. Confira os números.`);
+    const o={type,name,doc:doc?maskDoc(doc,type):''};if(p)Object.assign(p,o);else S.profiles.push({id:uid(),...o});save();render();toast('Documento salvo')},
+  f=>{const ty=()=>f.querySelector('[name=type]:checked').value;f.doc.addEventListener('input',()=>{f.doc.value=maskDoc(f.doc.value,ty())});
+    f.querySelectorAll('[name=type]').forEach(r=>r.addEventListener('change',()=>{f.doc.placeholder=ty()==='CNPJ'?'00.000.000/0000-00':'000.000.000-00';f.doc.value=maskDoc(f.doc.value,ty())}))});
+}
+
+/* ---------- quick add (linguagem natural) ---------- */
+const W=(s,g='')=>new RegExp(`(?<!\\p{L})(?:${s})(?!\\p{L})`,'iu'+g);
+function quickParse(raw){
+  let s=raw.trim();const low=s.toLowerCase();
+  const isOut=W('gastei|paguei|comprei|gasto|despesa').test(low),isIn=W('recebi|ganhei|receita|entrada|vendi').test(low);
+  const mm=low.match(/(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?!\s*(?:h|:|\/))/);
+  if((isOut||isIn)&&mm){const type=isIn&&!isOut?'in':'out';
+    let desc=(s.slice(0,mm.index)+' '+s.slice(mm.index+mm[0].length)).replace(W('gastei|paguei|comprei|gasto|despesa|recebi|ganhei|receita|entrada|vendi','g'),'').replace(/r\$/gi,'').replace(W('reais|real|com|de|no|na|em','g'),' ').replace(/\s+/g,' ').trim();
+    desc=desc.replace(/^./,c=>c.toUpperCase());return {kind:'tx',type,amount:parseMoney(mm[1]),desc,cat:guessCat(raw,type)}}
+  let date=today(),time='';const t=today();
+  const take=re=>{const m=s.match(re);if(m){s=s.replace(m[0],' ');return m}return null};
+  if(take(W('depois de amanh[ãa]')))date=addDays(t,2);else if(take(W('amanh[ãa]')))date=addDays(t,1);else if(take(W('hoje')))date=t;
+  else{const wd=take(W('(?:n[oa]\\s+)?(?:pr[oó]xim[oa]\\s+)?(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)(?:-feira)?'));
+    if(wd){const names=['domingo','segunda','terca','quarta','quinta','sexta','sabado'];const k=names.indexOf(wd[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));let diff=(k-new Date().getDay()+7)%7||7;date=addDays(t,diff)}
+    else{const dm=take(/(?:dia\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(dm){let y=dm[3]?+dm[3]:new Date().getFullYear();if(y<100)y+=2000;const c=`${y}-${pad(+dm[2])}-${pad(+dm[1])}`;date=(!dm[3]&&c<t)?`${y+1}${c.slice(4)}`:c}
+      else{const d1=take(W('dia\\s+(\\d{1,2})'));if(d1){let c=`${ym(t)}-${pad(+d1[1])}`;if(c<t)c=addMonths(c,1);date=c}}}}
+  const per=take(/(?<!\p{L})(?:[àa]s?\s+)?(\d{1,2})(?:[:h](\d{2}))?\s*h?\s+da\s+(manh[ãa]|tarde|noite)(?!\p{L})/iu);
+  const tm=per||take(/(?:(?<!\p{L})[àa]s?\s+)?(\d{1,2})(?:[:h](\d{2}))?\s*(?:h(?:rs?|oras?)?)(?!\p{L})/iu)||take(/(?<!\p{L})[àa]s?\s+(\d{1,2})(?::(\d{2}))?/iu)||take(/(\d{1,2}):(\d{2})/);
+  if(tm&&+tm[1]<24){let h=+tm[1];if(((per&&/tarde|noite/i.test(per[3]))||(!per&&W('[àa] noite|de noite|[àa] tarde').test(low)))&&h<12)h+=12;time=`${pad(h)}:${pad(+(tm[2]||0))}`}
+  s=s.replace(W('[àa]s|dia|no|na|de manh[ãa]|de noite|[àa] tarde|[àa] noite','g'),' ').replace(/\s+/g,' ').trim();
+  return {kind:'event',title:(s||raw).replace(/^./,c=>c.toUpperCase()),date,time};
+}
+
+/* ---------- .ics (Calendário do iPhone) ---------- */
+const icsEsc=s=>String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/([,;])/g,'\\$1');
+const icsDT=(d,t)=>d.replace(/-/g,'')+'T'+t.replace(':','')+'00';
+function vevent({id,title,date,time,dur=60,rrule,alarms=[],desc='',loc=''}){
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const L=['BEGIN:VEVENT',`UID:${id}@pulso`,`DTSTAMP:${stamp}`,`SUMMARY:${icsEsc(title)}`];
+  if(time){const e=pd(date);const[h,m]=time.split(':');e.setHours(+h,+m+dur);L.push(`DTSTART:${icsDT(date,time)}`,`DTEND:${icsDT(ymd(e),pad(e.getHours())+':'+pad(e.getMinutes()))}`)}
+  else L.push(`DTSTART;VALUE=DATE:${date.replace(/-/g,'')}`,`DTEND;VALUE=DATE:${addDays(date,1).replace(/-/g,'')}`);
+  if(rrule)L.push('RRULE:'+rrule);if(loc)L.push('LOCATION:'+icsEsc(loc));if(desc)L.push('DESCRIPTION:'+icsEsc(desc));
+  for(const a of alarms)L.push('BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${icsEsc(title)}`,`TRIGGER:-PT${a}M`,'END:VALARM');
+  L.push('END:VEVENT');return L.join('\r\n');
+}
+const wrapIcs=evs=>['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pulso//PT-BR','CALSCALE:GREGORIAN','METHOD:PUBLISH',...evs,'END:VCALENDAR'].join('\r\n');
+const RR={daily:'FREQ=DAILY',weekly:'FREQ=WEEKLY',monthly:'FREQ=MONTHLY',yearly:'FREQ=YEARLY'};
+const evIcs=e=>vevent({id:e.id,title:e.title,date:e.date,time:e.time,rrule:RR[e.repeat],alarms:e.remind,desc:e.notes,loc:e.location});
+function debtIcs(d){const f=debtInfo(d);const nx=f.overdue[0]||f.next;if(!nx)return null;const remaining=f.n?f.list.filter(x=>!x.paid&&x.due>=nx.due).length:0;
+  return vevent({id:d.id,title:`💳 ${d.name} · ${BRL.format(d.value)}`,date:nx.due,time:S.settings.billTime,dur:15,rrule:f.n?`FREQ=MONTHLY;COUNT=${remaining}`:'FREQ=MONTHLY',alarms:d.remind,desc:`${d.creditor||''} ${prof(d.profileId)?.type||''} ${prof(d.profileId)?.name||''}`.trim()})}
+async function deliver(name,text,mime){
+  const file=new File([text],name,{type:mime});
+  if(mime==='text/calendar'&&isIOS){const w=window.open('data:text/calendar;charset=utf-8,'+encodeURIComponent(text),'_blank');if(w)return}
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}}catch(e){if(e.name==='AbortError')return}
+  try{const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);toast('Arquivo gerado: '+name)}catch(e){toast('Este navegador não permite salvar arquivos aqui')}
+}
+
+/* ---------- lock (senha + Face ID) ---------- */
+let locked=false,pinBuf='',hiddenAt=0;
+async function sha(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pulso:'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return 'p:'+btoa(s)}}
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function showLock(){if(!S.settings.pinHash)return;locked=true;pinBuf='';const L=$('#lock');L.hidden=false;drawLock();if(S.settings.faceCred)setTimeout(()=>A.faceUnlock(),250)}
+function drawLock(){$('#lock').innerHTML=`<svg class="i logo" viewBox="0 0 24 24">${ICON.pulse}</svg><h2>Digite sua senha</h2>
+  <div class="pdots" id="pdots">${[0,1,2,3].map(i=>`<i class="${i<pinBuf.length?'on':''}"></i>`).join('')}</div>
+  <div class="keys">${[1,2,3,4,5,6,7,8,9].map(k=>`<button data-act="pinKey" data-k="${k}">${k}</button>`).join('')}
+  <button class="ghost" data-act="faceUnlock" aria-label="Face ID" ${S.settings.faceCred?'':'style="visibility:hidden"'}>${I('face')}</button><button data-act="pinKey" data-k="0">0</button><button class="ghost" data-act="pinKey" data-k="del" aria-label="Apagar">⌫</button></div>`}
+function unlock(){locked=false;$('#lock').hidden=true;$('#lock').innerHTML='';showPopup()}
+
+/* ---------- actions ---------- */
+const A={
+  tab(d){ui.tab=d.tab;try{sessionStorage.setItem('pulso.tab',d.tab)}catch(e){}render();scrollTo(0,0)},
+  toggleHide(){S.settings.hide=!S.settings.hide;haptic();save();render()},
+  addMenu(){haptic();sheet('Adicionar',`<div class="list" style="background:var(--s2)">
+    <button type="button" class="item" data-act="newEvent">${I('cal')}<div class="main"><div class="t">Compromisso</div><div class="s">Evento, consulta, reunião</div></div></button>
+    <button type="button" class="item" data-act="newTx" data-type="out">${I('wallet')}<div class="main"><div class="t">Despesa</div><div class="s">Algo que você pagou</div></div></button>
+    <button type="button" class="item" data-act="newTx" data-type="in">${I('wallet')}<div class="main"><div class="t">Receita</div><div class="s">Dinheiro que entrou</div></div></button>
+    <button type="button" class="item" data-act="newDebt">${I('card')}<div class="main"><div class="t">Dívida ou conta</div><div class="s">Parcelada ou mensal, por CPF/CNPJ</div></div></button></div>`)},
+  closeSheet:closeSheet,
+  newEvent(d){eventForm(null,d.d?{date:d.d}:{})},
+  editEvent(d){eventForm(S.events.find(e=>e.id===d.id))},
+  delEvent(d){confirmBox('Excluir compromisso?','Ele some da agenda e dos lembretes.','Excluir',()=>{S.events=S.events.filter(e=>e.id!==d.id);save();closeSheet();render();toast('Compromisso excluído')})},
+  newTx(d){txForm(null,{type:d.type||'out'})},
+  editTx(d){txForm(S.tx.find(x=>x.id===d.id))},
+  delTx(d){confirmBox('Excluir lançamento?','O valor sai do saldo do mês.','Excluir',()=>{const x=S.tx.find(t=>t.id===d.id);if(x&&x.link){const[did,due]=x.link.split('|');const db=S.debts.find(z=>z.id===did);if(db)db.paid=db.paid.filter(p=>p!==due)}S.tx=S.tx.filter(t=>t.id!==d.id);save();closeSheet();render();toast('Lançamento excluído')})},
+  newDebt(){debtForm(null)},
+  openDebt(d){debtDetail(d.id)},
+  editDebt(d){debtForm(S.debts.find(x=>x.id===d.id))},
+  delDebt(d){confirmBox('Excluir dívida?','O histórico de parcelas some. Lançamentos já feitos em Finanças continuam.','Excluir',()=>{S.debts=S.debts.filter(x=>x.id!==d.id);save();closeSheet();render();toast('Excluída')})},
+  debtsOf(d){ui.debtProf=d.id;A.tab({tab:'debts'})},
+  togglePaid(d){const db=S.debts.find(x=>x.id===d.id);if(!db)return;haptic();const f=debtInfo(db),r=f.list.find(x=>x.due===d.due);const link=db.id+'|'+d.due;
+    if(db.paid.includes(d.due)){db.paid=db.paid.filter(p=>p!==d.due);S.tx=S.tx.filter(t=>t.link!==link);toast('Desmarcada')}
+    else{db.paid.push(d.due);if(S.settings.payToTx)S.tx.push({id:uid(),type:'out',amount:db.value,cat:f.n?'Dívidas':'Contas',date:today(),desc:`${db.name}${f.n?` · ${r.i}/${f.n}`:''}`,profileId:db.profileId,link});
+      const nf=debtInfo(db);toast(nf.done?'🎉 Dívida quitada!':S.settings.payToTx?'Paga · lançada em Finanças':'Marcada como paga')}
+    save();render();const sc=$('.sheet')?.scrollTop;debtDetail(db.id);const sh=$('.sheet');if(sh){sh.style.animation='none';sh.scrollTop=sc}$('.backdrop').style.animation='none'},
+  selDay(d){ui.sel=d.d;if(ym(d.d)!==ui.calMonth)ui.calMonth=ym(d.d);render()},
+  calMonth(d){ui.calMonth=addYM(ui.calMonth,+d.n);render()},
+  calToday(){ui.calMonth=ym(today());ui.sel=today();render()},
+  finMonth(d){ui.finMonth=addYM(ui.finMonth,+d.n);render()},
+  finProf(d){ui.finProf=d.id;render()},
+  debtProf(d){ui.debtProf=d.id;render()},
+  newProfile(){profileForm(null)},
+  editProfile(d){profileForm(prof(d.id))},
+  delProfile(d){const used=S.debts.some(x=>x.profileId===d.id)||S.tx.some(x=>x.profileId===d.id);if(used){toast('Esse documento tem dívidas ou lançamentos. Mova ou exclua-os antes.');return}
+    if(S.profiles.length<2){toast('Mantenha ao menos um CPF ou CNPJ');return}confirmBox('Excluir documento?','Ele deixa de aparecer nos filtros.','Excluir',()=>{S.profiles=S.profiles.filter(p=>p.id!==d.id);save();closeSheet();render()})},
+  icsEvent(d){const e=S.events.find(x=>x.id===d.id);if(e)deliver(`${e.title}.ics`,wrapIcs([evIcs(e)]),'text/calendar')},
+  icsDebt(d){const db=S.debts.find(x=>x.id===d.id);const v=db&&debtIcs(db);if(!v){toast('Não há parcelas em aberto');return}deliver(`${db.name}.ics`,wrapIcs([v]),'text/calendar')},
+  exportAllIcs(){const list=[...S.events.filter(e=>e.repeat!=='none'||e.date>=today()).map(evIcs),...S.debts.map(debtIcs).filter(Boolean)];if(!list.length){toast('Nada para enviar ainda');return}deliver('pulso-agenda.ics',wrapIcs(list),'text/calendar')},
+  clearEx(){confirmBox('Apagar exemplos?','Compromissos, lançamentos e dívidas de exemplo serão removidos. Seus dados ficam.','Apagar',()=>{S.events=S.events.filter(e=>!e.ex);S.tx=S.tx.filter(e=>!e.ex);S.debts=S.debts.filter(e=>!e.ex);save();render();toast('Pronto, tudo limpo para você')})},
+  async enableNotif(){
+    if(!('Notification' in window)){if(isIOS&&!standalone())A.installHelp();else toast('Este navegador não suporta notificações');return}
+    if(Notification.permission==='denied'){toast('Ative em Ajustes › Notificações › Pulso');return}
+    const p=await Notification.requestPermission();S.settings.notifAsked=true;save();render();
+    if(p==='granted'){notify('Pulso','Notificações ativadas. Você será avisado dos compromissos e contas.','welcome');toast('Notificações ativadas')}else toast('Notificações não foram permitidas')},
+  testRem(){const x={title:'Teste do Pulso',body:'Assim chegam seus lembretes.',alert:'both',key:'t'+Date.now()};if(canNotify())notify(x.title,x.body,x.key);else toast('Notificações desativadas: mostrando só o pop-up');popQ.push(x);showPopup()},
+  popOk(){popQ.shift();$('#popup').innerHTML='';haptic();showPopup()},
+  popGo(){const x=popQ.shift();$('#popup').innerHTML='';if(x.go==='agenda'){ui.sel=x.day;ui.calMonth=ym(x.day)}A.tab({tab:x.go});if(x.debt)debtDetail(x.debt);showPopup()},
+  snooze(){const x=popQ.shift();$('#popup').innerHTML='';S.snoozes.push({key:'s'+Date.now(),at:Date.now()+10*60000,alert:x.alert,title:x.title,body:x.body});save();toast('Aviso de novo em 10 minutos');showPopup()},
+  remSettings(){const st=S.settings;sheet('Padrões de aviso',`
+    <div class="f"><span>Tipo de aviso padrão</span>${seg('alert',ALERTS,st.alert,'red')}</div>
+    <div class="f"><span>Compromissos: avisar antes</span>${checks('evRemind',EV_REM,st.evRemind)}</div>
+    <div class="f"><span>Contas: avisar</span>${checks('debtRemind',DEBT_REM,st.debtRemind)}</div>
+    <div class="row2"><label class="f"><span>Horário dos avisos de contas</span><input type="time" name="billTime" value="${st.billTime}"></label><label class="f"><span>Compromisso sem hora avisa às</span><input type="time" name="allDayTime" value="${st.allDayTime}"></label></div>
+    <div class="f"><span>Ao marcar parcela paga</span>${seg('payToTx',[['1','Lançar em Finanças'],['0','Só marcar']],st.payToTx?'1':'0')}</div>
+    <button class="btn primary" type="submit">Salvar</button>`,fd=>{Object.assign(st,{alert:fd.get('alert'),evRemind:fd.getAll('evRemind').map(Number),debtRemind:fd.getAll('debtRemind').map(Number),billTime:fd.get('billTime')||'09:00',allDayTime:fd.get('allDayTime')||'09:00',payToTx:fd.get('payToTx')==='1'});save();render();toast('Padrões salvos')})},
+  pinSetup(){const has=!!S.settings.pinHash;sheet(has?'Senha do app':'Criar senha',`
+    ${has?'<p class="muted" style="margin:0">Digite uma nova senha para trocar, ou desative o bloqueio.</p>':'<p class="muted" style="margin:0">O Pulso pede a senha ao abrir e depois de 1 minuto fora do app.</p>'}
+    <div class="row2"><label class="f"><span>Senha (4 dígitos)</span><input name="p1" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password"></label><label class="f"><span>Repita</span><input name="p2" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password"></label></div>
+    <div class="f err" id="ferr" hidden></div>
+    <div class="btns"><button class="btn primary" type="submit">Salvar senha</button>${has?'<button class="btn danger" type="button" data-act="pinOff">Desativar bloqueio</button>':''}</div>`,
+    async(fd,f)=>{const a=fd.get('p1'),b=fd.get('p2');const e=$('#ferr');if(!/^\d{4}$/.test(a)){e.hidden=false;e.textContent='Use exatamente 4 números.';return false}if(a!==b){e.hidden=false;e.textContent='As senhas não são iguais.';return false}
+      S.settings.pinHash=await sha(a);save();closeSheet();render();toast('Senha criada')})},
+  pinOff(){confirmBox('Desativar bloqueio?','O app abre sem senha e sem Face ID.','Desativar',()=>{S.settings.pinHash=null;S.settings.faceCred=null;save();closeSheet();render();toast('Bloqueio desativado')})},
+  async faceSetup(){const st=S.settings;if(!st.pinHash){toast('Crie uma senha primeiro: ela é o plano B do Face ID');A.pinSetup();return}
+    if(st.faceCred){confirmBox('Desativar Face ID?','Você entra só com a senha.','Desativar',()=>{st.faceCred=null;save();render()});return}
+    try{if(!window.PublicKeyCredential)throw new Error('sem suporte');const c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'Pulso'},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'Pulso',displayName:'Pulso'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
+      st.faceCred=b64(c.rawId);save();render();haptic();toast('Face ID ativado')}catch(e){toast(e.name==='NotAllowedError'?'Face ID cancelado':'Face ID não está disponível aqui. Abra pelo app instalado.')}},
+  async faceUnlock(){try{const r=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:unb64(S.settings.faceCred)}],userVerification:'required',timeout:60000}});if(r){haptic();unlock()}}catch(e){}},
+  async pinKey(d){if(d.k==='del')pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=d.k;haptic();drawLock();
+    if(pinBuf.length===4){if(await sha(pinBuf)===S.settings.pinHash)unlock();else{pinBuf='';drawLock();$('#pdots').classList.add('shake')}}},
+  exportData(){const st=new Date();deliver(`pulso-backup-${ymd(st)}.json`,JSON.stringify(S,null,1),'application/json')},
+  importData(){$('#importFile').click()},
+  wipe(){confirmBox('Apagar tudo?','Todos os compromissos, finanças, dívidas e documentos serão apagados deste aparelho. Faça um backup antes se quiser guardar.','Apagar tudo',()=>{const keep=S.settings;S=seed();S.events=[];S.tx=[];S.debts=[];S.settings={...keep,pinHash:keep.pinHash,faceCred:keep.faceCred};save();render();toast('Dados apagados')})},
+  installHelp(){sheet('Instalar no iPhone',`<ol class="steps">
+    <li>Abra este endereço no <b>Safari</b>.</li><li>Toque em <b>Compartilhar</b> (o quadrado com a seta para cima).</li>
+    <li>Escolha <b>Adicionar à Tela de Início</b> e confirme com <b>Adicionar</b>.</li><li>Abra o <b>Pulso</b> pelo ícone novo e toque em <b>Ativar notificações</b>.</li></ol>
+    <p class="small muted" style="margin:0">Instalado, o Pulso abre em tela cheia, funciona offline, mostra o número de pendências no ícone e libera notificações e Face ID.</p>
+    <button class="btn primary" type="button" data-act="closeSheet">Entendi</button>`)},
+  cfYes(){const f=confirmFn;confirmFn=null;$('#modal').innerHTML='';f&&f()},
+  cfNo(){confirmFn=null;$('#modal').innerHTML=''}
+};
+
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;const fn=A[el.dataset.act];if(fn){e.preventDefault();fn(el.dataset,el,e)}});
+document.addEventListener('submit',e=>{if(e.target.id!=='qa')return;e.preventDefault();const v=$('#qaIn').value.trim();if(!v){$('#qaIn').focus();return}
+  const r=quickParse(v);$('#qaIn').value='';if(r.kind==='tx')txForm(null,{type:r.type,amount:r.amount,desc:r.desc,cat:r.cat});else eventForm(null,{title:r.title,date:r.date,time:r.time})});
+$('#importFile').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!d.v||!Array.isArray(d.events))throw 0;
+  confirmBox('Restaurar backup?',`Isso substitui os dados atuais por ${d.events.length} compromissos, ${d.tx.length} lançamentos e ${d.debts.length} dívidas.`,'Restaurar',()=>{S=d;S.lastCheck=Date.now();normalize();save();render();toast('Backup restaurado')})}catch(err){toast('Esse arquivo não é um backup do Pulso')}};rd.readAsText(file)});
+addEventListener('scroll',()=>$('#top').classList.toggle('scrolled',scrollY>4),{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup()}});
+
+/* ---------- boot ---------- */
+load();save();render();
+if(S.settings.pinHash)showLock();
+check();setInterval(check,20000);
+setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home')render()},60000);
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+if('serviceWorker' in navigator&&!inFrame&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.go)A.tab({tab:e.data.go})})}
+</script>
+<!--HEAD-->
+</body>
+</html>
+<!--/HEAD-->
