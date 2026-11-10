@@ -259,6 +259,11 @@ button.item:active,.item.tap:active{background:var(--s2)}
 .item.news .s{margin-top:5px;white-space:normal}
 .item.news img{width:76px;height:76px;border-radius:12px;object-fit:cover;flex:none;background:var(--s2)}
 .ntp{color:var(--red2);font-weight:600}
+.chip.addt{color:var(--red2);border-color:var(--redline);background:none}
+.tlist .item{padding:10px 8px 10px 14px}
+.tlist .icon-btn{background:none;color:var(--mu)}
+.chips.wrap{flex-wrap:wrap;margin:0;padding:0}
+.f .qa input{border:0;background:none;padding:8px 0;min-height:0;border-radius:0}
 .nmeta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--mu);font-size:12.5px;margin:-6px 2px 0}
 .nmeta button{color:var(--red2);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:5px}
 .nmeta button svg{width:15px;height:15px}
@@ -797,15 +802,21 @@ function drawLock(){$('#lock').innerHTML=`<svg class="i logo" viewBox="0 0 24 24
 function unlock(){locked=false;$('#lock').hidden=true;$('#lock').innerHTML='';showPopup()}
 
 /* ---------- notícias ---------- */
-// Para adicionar um tema: inclua um objeto em NEWS_TOPICS com id, nome e as fontes (feeds RSS ou APIs).
+// Temas padrão. O usuário pode remover estes e criar os seus (busca por palavra) na própria aba Notícias.
 const GN=q=>`https://news.google.com/rss/search?q=${encodeURIComponent(q+' when:2d')}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
-const NEWS_TOPICS=[
-  {id:'dev',name:'Programação',feeds:[{kind:'tabnews',src:'TabNews'},{kind:'hn',src:'Hacker News'},{url:GN('programação OR programador OR desenvolvedores OR "desenvolvimento de software"'),gn:1}]},
-  {id:'tech',name:'Tecnologia',feeds:[{url:'https://tecnoblog.net/feed/',src:'Tecnoblog'},{url:'https://canaltech.com.br/rss/',src:'Canaltech'},{url:'https://olhardigital.com.br/feed/',src:'Olhar Digital'},{url:GN('tecnologia'),gn:1}]},
-  {id:'biz',name:'Negócios',feeds:[{url:'https://www.infomoney.com.br/negocios/feed/',src:'InfoMoney'},{url:GN('negócios empresas'),gn:1}]},
-  {id:'fin',name:'Finanças',feeds:[{url:'https://g1.globo.com/rss/g1/economia/',src:'g1 Economia'},{url:'https://www.infomoney.com.br/economia/feed/',src:'InfoMoney'},{url:GN('economia finanças pessoais'),gn:1}]},
-  {id:'inv',name:'Investimentos',feeds:[{url:'https://www.infomoney.com.br/mercados/feed/',src:'InfoMoney'},{url:'https://www.moneytimes.com.br/feed/',src:'Money Times'},{url:GN('investimentos Ibovespa'),gn:1}]}
+const BING=q=>`https://www.bing.com/news/search?q=${encodeURIComponent(q)}&format=rss&setlang=pt-BR&cc=BR&qft=sortbydate%3d%221%22`;
+const NEWS_BUILTIN=[
+  {id:'dev',name:'Programação',feeds:[{kind:'tabnews',src:'TabNews'},{kind:'hn',src:'Hacker News'},{kind:'search',q:'programação OR programador OR desenvolvedores OR "desenvolvimento de software"'}]},
+  {id:'tech',name:'Tecnologia',feeds:[{url:'https://tecnoblog.net/feed/',src:'Tecnoblog'},{url:'https://canaltech.com.br/rss/',src:'Canaltech'},{url:'https://olhardigital.com.br/feed/',src:'Olhar Digital'},{kind:'search',q:'tecnologia'}]},
+  {id:'biz',name:'Negócios',feeds:[{url:'https://www.infomoney.com.br/negocios/feed/',src:'InfoMoney'},{kind:'search',q:'negócios empresas'}]},
+  {id:'fin',name:'Finanças',feeds:[{url:'https://g1.globo.com/rss/g1/economia/',src:'g1 Economia'},{url:'https://www.infomoney.com.br/economia/feed/',src:'InfoMoney'},{kind:'search',q:'economia finanças pessoais'}]},
+  {id:'inv',name:'Investimentos',feeds:[{url:'https://www.infomoney.com.br/mercados/feed/',src:'InfoMoney'},{url:'https://www.moneytimes.com.br/feed/',src:'Money Times'},{kind:'search',q:'investimentos Ibovespa'}]}
 ];
+const NEWS_SUGGEST=['Séries','Filmes','Futebol','Games','Inteligência artificial','Ciência','Saúde','Política','Carros','Viagem','Música','Startups','Criptomoedas','Esportes','Educação'];
+const NMAX=15;
+function NT(){const l=S.settings.ntopics;if(!Array.isArray(l))return NEWS_BUILTIN;
+  return l.map(x=>x.q?{id:x.id,name:x.name,q:x.q,custom:true,feeds:[{kind:'search',q:x.q}]}:NEWS_BUILTIN.find(b=>b.id===x.id)).filter(Boolean)}
+function setNT(list){S.settings.ntopics=list.map(t=>t.custom?{id:t.id,name:t.name,q:t.q}:{id:t.id});save()}
 const NKEY='pulso.news',NFRESH=20*60e3;
 let NC={};try{NC=JSON.parse(localStorage.getItem(NKEY)||'{}')||{}}catch(e){NC={}}
 const nsave=()=>{try{localStorage.setItem(NKEY,JSON.stringify(NC))}catch(e){}};
@@ -819,20 +830,23 @@ const imgIn=h=>{const m=/<img[^>]+src=["']([^"']+)["']/i.exec(h||'');return m?m[
 const okUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
 const NFULL={};
 function mkItem(f,title,link,at,img,src,body){title=clean(title);if(f.gn){const k=title.lastIndexOf(' - ');if(k>20){src=src||title.slice(k+3);title=title.slice(0,k)}}
-  link=okUrl(String(link||'').trim());if(!title||!link)return null;at=+at||Date.now();if(at>Date.now()+36e5)at=Date.now();
+  link=String(link||'').trim();if(/bing\.com\/news\/apiclick/i.test(link)){try{link=new URL(link).searchParams.get('url')||link}catch(e){}}
+  link=okUrl(link);if(!title||!link)return null;at=+at||Date.now();if(at>Date.now()+36e5)at=Date.now();
   const desc=f.gn?'':clean(body).slice(0,420);if(body&&body.length>1500&&!f.gn)NFULL[link]=body;
   return {title,link,at,img:okUrl(img),src:clean(src||f.src||''),desc}}
 function parseFeed(xml,f){const doc=new DOMParser().parseFromString(xml,'text/xml');if(doc.querySelector('parsererror'))throw new Error('feed inválido');
   return [...doc.querySelectorAll('item,entry')].slice(0,20).map(it=>{const g=n=>{const e=it.getElementsByTagName(n)[0];return e?e.textContent:''};
     const ln=it.querySelector('link');const link=ln?(ln.getAttribute('href')||ln.textContent):'';
     const mc=it.getElementsByTagName('media:content')[0]||it.getElementsByTagName('media:thumbnail')[0];const enc=it.querySelector('enclosure');
-    const img=(mc&&mc.getAttribute('url'))||(enc&&/image/.test(enc.getAttribute('type')||'image')&&enc.getAttribute('url'))||imgIn(g('content:encoded')||g('description'));
-    return mkItem(f,g('title'),link,Date.parse(g('pubDate')||g('published')||g('updated')||g('dc:date')),img,f.gn?g('source'):'',g('content:encoded')||g('content')||g('description')||g('summary'))}).filter(Boolean)}
+    const img=(f.bing&&g('News:Image'))||(mc&&mc.getAttribute('url'))||(enc&&/image/.test(enc.getAttribute('type')||'image')&&enc.getAttribute('url'))||imgIn(g('content:encoded')||g('description'));
+    return mkItem(f,g('title'),link,Date.parse(g('pubDate')||g('published')||g('updated')||g('dc:date')),img,f.gn?g('source'):f.bing?g('News:Source'):'',g('content:encoded')||g('content')||g('description')||g('summary'))}).filter(Boolean)}
 async function feedItems(f){
   if(f.kind==='hn'){const j=JSON.parse(await viaProxies('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=20',true));
     return j.hits.map(h=>mkItem(f,h.title,h.url||`https://news.ycombinator.com/item?id=${h.objectID}`,h.created_at_i*1000,'','Hacker News (EN)')).filter(Boolean)}
   if(f.kind==='tabnews'){const j=JSON.parse(await viaProxies('https://www.tabnews.com.br/api/v1/contents?page=1&per_page=20&strategy=relevant',true));
     return j.filter(x=>!x.parent_id).map(x=>mkItem(f,x.title,`https://www.tabnews.com.br/${x.owner_username}/${x.slug}`,Date.parse(x.published_at),'','TabNews')).filter(Boolean)}
+  if(f.kind==='search'){let r=[];try{r=parseFeed(await viaProxies(BING(f.q)),{bing:1})}catch(e){}
+    if(r.length<4){try{r=r.concat(await feedItems({url:GN(f.q),gn:1}))}catch(e){if(!r.length)throw e}}return r}
   try{const j=JSON.parse(await getText('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url)));
     if(j.status==='ok'&&j.items&&j.items.length)return j.items.map(x=>mkItem(f,x.title,x.link,Date.parse(String(x.pubDate||'').replace(' ','T')+'Z'),
       x.thumbnail||(x.enclosure&&/image/.test(x.enclosure.type||'')&&x.enclosure.link)||imgIn(x.content||x.description),'',(x.content&&x.content.length>(x.description||'').length?x.content:x.description))).filter(Boolean)}catch(e){}
@@ -840,11 +854,11 @@ async function feedItems(f){
 const nkey=t=>t.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'').slice(0,60);
 function dedupe(list){const seen=new Set();return list.filter(x=>{const k=nkey(x.title);if(seen.has(k)||seen.has(x.link))return false;seen.add(k);seen.add(x.link);return true})}
 function loadTopic(id){
-  const T=NEWS_TOPICS.find(t=>t.id===id);NC[id]={items:[],at:0,...NC[id],tried:Date.now()};
+  const T=NT().find(t=>t.id===id);NC[id]={items:[],at:0,...NC[id],tried:Date.now()};
   return nload[id]=Promise.allSettled(T.feeds.map(feedItems)).then(rs=>{const all=[];for(const r of rs)if(r.status==='fulfilled')all.push(...r.value);
     if(all.length){NC[id]={items:dedupe(all.sort((a,b)=>b.at-a.at)).slice(0,40),at:Date.now(),tried:Date.now()}}else NC[id].err=Date.now();nsave()})
     .finally(()=>{delete nload[id];newsPaint()})}
-const newsIds=()=>{const t=ui.newsTopic;return t==='all'?NEWS_TOPICS.map(x=>x.id):[t]};
+const newsIds=()=>{const t=ui.newsTopic;return t==='all'?NT().map(x=>x.id):[t]};
 function newsRefresh(force){const now=Date.now(),started=[];
   for(const id of newsIds()){if(nload[id])continue;const c=NC[id];if(!force&&c&&(now-c.at<NFRESH||now-(c.tried||0)<60e3))continue;started.push(loadTopic(id))}
   if(started.length)newsPaint();
@@ -852,7 +866,7 @@ function newsRefresh(force){const now=Date.now(),started=[];
 function newsPaint(){if(ui.tab==='news')$('#view').innerHTML=vNews()}
 const relTime=t=>{const m=Math.round((Date.now()-t)/60000);if(m<1)return 'agora';if(m<60)return `há ${m} min`;const h=Math.round(m/60);if(h<24)return `há ${h} h`;const d=ymd(new Date(t));return d===addDays(today(),-1)?'ontem':fmtDay(d)};
 let NVIEW=[];
-function newsItem(x,showTp,i){const tp=showTp&&NEWS_TOPICS.find(t=>t.id===x.tp);
+function newsItem(x,showTp,i){const tp=showTp&&NT().find(t=>t.id===x.tp);
   return `<button class="item news" data-act="readNews" data-i="${i}"><div class="main"><div class="t">${esc(x.title)}</div>
   <div class="s">${tp?`<span class="ntp">${esc(tp.name)}</span> · `:''}${esc(x.src||'')}${x.src?' · ':''}${relTime(x.at)}</div></div>
   ${x.img?`<img src="${esc(x.img)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</button>`}
@@ -862,13 +876,29 @@ function vNews(){
   items=dedupe(items.sort((a,b)=>b.at-a.at)).slice(0,t==='all'?60:40);
   const ats=ids.map(i=>NC[i]&&NC[i].at||0).filter(Boolean),at=ats.length?Math.min(...ats):0;
   const failed=!loading&&!items.length&&ids.some(i=>NC[i]&&NC[i].err);
-  let html=`<div class="chips">${[['all','Tudo'],...NEWS_TOPICS.map(x=>[x.id,x.name])].map(([k,l])=>`<button class="chip ${t===k?'on':''}" data-act="newsTopic" data-id="${k}">${esc(l)}</button>`).join('')}</div>
+  let html=`<div class="chips">${[['all','Tudo'],...NT().map(x=>[x.id,x.name])].map(([k,l])=>`<button class="chip ${t===k?'on':''}" data-act="newsTopic" data-id="${k}">${esc(l)}</button>`).join('')}<button class="chip addt" data-act="newsTopics">+ Tema</button></div>
   <div class="nmeta"><span>${loading?'Buscando notícias…':at?'Atualizado '+relTime(at):'Ainda não carregado'}</span><button data-act="newsReload" class="${loading?'spin':''}" ${loading?'disabled':''}>${I('refresh')}Atualizar</button></div>`;
   NVIEW=items;
+  if(!ids.length)return html+`<div class="list"><div class="empty">Você não tem temas de notícias.<br>Toque em <b>+ Tema</b> para adicionar.</div></div>`;
   if(items.length)html+=`<div class="list">${items.map((x,i)=>newsItem(x,t==='all',i)).join('')}</div>`;
   else if(loading)html+=`<div class="list">${[1,2,3,4,5].map(()=>`<div class="item"><div class="main" style="display:grid;gap:8px"><div class="skel"></div><div class="skel" style="width:70%"></div><div class="skel" style="width:35%;height:10px"></div></div></div>`).join('')}</div>`;
   else html+=`<div class="list"><div class="empty">${failed?'Não foi possível carregar as notícias agora.<br>Confira a internet e toque em <b>Atualizar</b>.':'Toque em <b>Atualizar</b> para buscar as notícias.'}</div></div>`;
   return html}
+
+function topicsSheet(){const list=NT(),have=new Set(list.map(t=>nkey(t.name)));
+  const sugs=NEWS_SUGGEST.filter(x=>!have.has(nkey(x)));const missing=NEWS_BUILTIN.filter(b=>!list.some(t=>t.id===b.id));
+  sheet('Temas de notícias',`<div class="f"><span>Novo tema</span><div class="qa" style="background:var(--s2)"><input name="q" maxlength="60" placeholder="Ex.: séries, Fórmula 1, Apple" enterkeyhint="done" aria-label="Novo tema"><button type="submit">Adicionar</button></div>
+    <span class="small muted" style="font-weight:400">O Pulso busca as notícias mais recentes sobre a palavra que você digitar.</span></div>
+    ${sugs.length?`<div class="f"><span>Sugestões</span><div class="chips wrap">${sugs.map(x=>`<button type="button" class="chip" data-act="addTopic" data-q="${esc(x)}">+ ${esc(x)}</button>`).join('')}</div></div>`:''}
+    <div class="f"><span>Seus temas (${list.length})</span><div class="list tlist" style="background:var(--s2)">${list.map(t=>`<div class="item"><div class="main"><div class="t">${esc(t.name)}</div>
+      <div class="s">${t.custom?'Busca: “'+esc(t.q)+'”':'Fontes selecionadas'}</div></div><button type="button" class="icon-btn" data-act="delTopic" data-id="${t.id}" aria-label="Remover ${esc(t.name)}">${I('trash')}</button></div>`).join('')||'<div class="empty">Nenhum tema ainda.</div>'}</div></div>
+    ${missing.length?`<button type="button" class="btn ghost" data-act="restoreTopics">Restaurar temas padrão (${missing.map(b=>b.name).join(', ')})</button>`:''}`,
+    fd=>{const q=String(fd.get('q')||'').trim();if(!q){$('#sf [name=q]').focus();return false}return addTopic(q)})}
+function addTopic(q){q=q.replace(/\s+/g,' ').trim();if(!q)return false;const list=NT();
+  const dup=list.find(t=>nkey(t.name)===nkey(q));if(dup){toast(`“${dup.name}” já está nos seus temas`);return false}
+  if(list.length>=NMAX){toast(`Limite de ${NMAX} temas. Remova algum para adicionar.`);return false}
+  const t={id:'c'+uid(),name:q.charAt(0).toUpperCase()+q.slice(1),q,custom:true};setNT([...list,t]);
+  closeSheet();toast(`Tema “${t.name}” adicionado`);A.newsTopic({id:t.id});return false}
 
 /* ---------- mercado (cotações) ---------- */
 // Para mudar as ações exibidas, edite STOCKS (código da B3 + nome).
@@ -973,7 +1003,7 @@ async function fetchArticle(x){
   return NART[x.link]=r||{fail:true}}
 let readerOpen=null;
 const rfs=()=>{try{return +localStorage.getItem('pulso.rfs')||18}catch(e){return 18}};
-function readerHtml(x,a){const tp=NEWS_TOPICS.find(t=>t.id===x.tp);
+function readerHtml(x,a){const tp=NT().find(t=>t.id===x.tp);
   const img=x.img||(a&&a.img)||'';const dupImg=img&&a&&a.html&&a.html.includes(img.split('?')[0]);
   let body;
   if(!a)body=`<div style="display:grid;gap:12px">${[100,96,90,98,60,100,92,80].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div>`;
@@ -1000,6 +1030,12 @@ const A={
   newsTopic(d){ui.newsTopic=d.id;try{localStorage.setItem('pulso.newsTopic',d.id)}catch(e){}haptic();newsPaint();scrollTo(0,0);newsRefresh(false)},
   newsReload(){haptic();newsRefresh(true)},
   mktReload(){haptic();marketRefresh(true)},
+  newsTopics(){haptic();topicsSheet()},
+  addTopic(d){addTopic(d.q)},
+  delTopic(d){const t=NT().find(x=>x.id===d.id);if(!t)return;confirmBox('Remover tema?',`As notícias de “${t.name}” deixam de aparecer.${t.custom?'':' Você pode restaurar os temas padrão depois.'}`,'Remover',()=>{
+    setNT(NT().filter(x=>x.id!==d.id));delete NC[d.id];nsave();if(ui.newsTopic===d.id){ui.newsTopic='all';try{localStorage.setItem('pulso.newsTopic','all')}catch(e){}}
+    newsPaint();topicsSheet();toast('Tema removido')})},
+  restoreTopics(){const list=NT();setNT([...NEWS_BUILTIN.filter(b=>!list.some(t=>t.id===b.id)),...list]);haptic();topicsSheet();newsPaint();newsRefresh(false);toast('Temas padrão restaurados')},
   readNews(d){const x=NVIEW[+d.i];if(x){haptic();openReader(x)}},
   closeReader(){closeReader()},
   readerFont(){const n=[16,18,20,22],v=n[(n.indexOf(rfs())+1)%n.length];try{localStorage.setItem('pulso.rfs',v)}catch(e){}const t=$('#reader .rtext');if(t)t.style.setProperty('--rfs',v+'px');haptic()},
@@ -1094,7 +1130,7 @@ addEventListener('scroll',()=>$('#top').classList.toggle('scrolled',scrollY>4),{
 document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false)}});
 
 /* ---------- boot ---------- */
-load();save();if(!NEWS_TOPICS.some(t=>t.id===ui.newsTopic))ui.newsTopic='all';render();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false);
+load();save();if(!NT().some(t=>t.id===ui.newsTopic))ui.newsTopic='all';render();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false);
 if(S.settings.pinHash)showLock();
 check();setInterval(check,20000);
 setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home'&&document.activeElement!==$('#qaIn'))render()},60000);
