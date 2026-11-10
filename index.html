@@ -47,7 +47,7 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke
 main{padding:6px 16px calc(var(--tabh) + 96px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 
 /* tabs */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(5,1fr);
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
   padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 4px);background:rgba(10,10,12,.88);
   -webkit-backdrop-filter:saturate(160%) blur(20px);backdrop-filter:saturate(160%) blur(20px);border-top:1px solid var(--line)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--mu2);font-size:10.5px;font-weight:600;letter-spacing:.01em;position:relative}
@@ -252,6 +252,20 @@ button.item:active,.item.tap:active{background:var(--s2)}
 @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(14deg)}40%{transform:rotate(-12deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg)}}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* news */
+.item.news{align-items:flex-start;gap:12px;color:inherit;text-decoration:none}
+a.item.news:active{background:var(--s2)}
+.item.news .t{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.3;font-size:15px}
+.item.news .s{margin-top:5px;white-space:normal}
+.item.news img{width:76px;height:76px;border-radius:12px;object-fit:cover;flex:none;background:var(--s2)}
+.ntp{color:var(--red2);font-weight:600}
+.nmeta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--mu);font-size:12.5px;margin:-6px 2px 0}
+.nmeta button{color:var(--red2);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:5px}
+.nmeta button svg{width:15px;height:15px}
+.nmeta .spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skel{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--s2),var(--s3),var(--s2));background-size:200% 100%;animation:shim 1.2s infinite}
+@keyframes shim{to{background-position:-200% 0}}
 @media (min-width:600px){.hero h1{font-size:48px}}
 </style>
 <!--HEAD-->
@@ -326,7 +340,9 @@ const ICON={
  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
  bld:'<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2 21h20M8 7h4M8 11h4M8 15h4"/>',
  trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
- spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>'
+ spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
+ news:'<path d="M4 5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2zM17 8h2a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h3"/>',
+ refresh:'<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/>'
 };
 const I=(n,cls='')=>`<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
 
@@ -372,7 +388,8 @@ function seed(){
 function normalize(){S.settings={...DEF_SETTINGS,...S.settings};for(const k of['profiles','events','tx','debts','snoozes'])S[k]=S[k]||[];S.fired=S.fired||{};for(const d of S.debts)d.paid=d.paid||[]}
 function load(){try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}if(!S||!S.v)S=seed();normalize()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Não foi possível salvar neste navegador')}updateBadge()}
-const ui={tab:'home',calMonth:ym(today()),sel:today(),finMonth:ym(today()),finProf:'all',debtProf:'all'};
+const ui={tab:'home',calMonth:ym(today()),sel:today(),finMonth:ym(today()),finProf:'all',debtProf:'all',newsTopic:'all'};
+try{const n=localStorage.getItem('pulso.newsTopic');if(n)ui.newsTopic=n}catch(e){}
 try{const t=sessionStorage.getItem('pulso.tab');if(t)ui.tab=t}catch(e){}
 const prof=id=>S.profiles.find(p=>p.id===id);
 const docTag=id=>{const p=prof(id);if(!p)return '';return `<span class="doc ${p.type==='CNPJ'?'cnpj':''}">${p.type}</span>`};
@@ -463,14 +480,15 @@ const EV_REM=[[0,'Na hora'],[10,'10 min'],[30,'30 min'],[60,'1 h'],[120,'2 h'],[
 const DEBT_REM=[[0,'No dia'],[1440,'1 dia antes'],[4320,'3 dias antes'],[10080,'7 dias antes']];
 
 /* ---------- views ---------- */
-const TABS=[['home','Início','home'],['agenda','Agenda','cal'],['fin','Finanças','wallet'],['debts','Dívidas','card'],['more','Mais','more']];
+const TABS=[['home','Início','home'],['agenda','Agenda','cal'],['fin','Finanças','wallet'],['debts','Dívidas','card'],['news','Notícias','news'],['more','Mais','more']];
 function renderTabs(){let late=0;for(const d of S.debts)late+=debtInfo(d).overdue.length;
   $('#tabs').innerHTML=TABS.map(([k,l,i])=>`<button class="tab ${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}" aria-label="${l}">${I(i)}<span>${l}</span>${k==='debts'&&late?`<b class="dot">${late}</b>`:''}</button>`).join('')}
 function render(){
   renderTabs();
   $('#eyeBtn').innerHTML=I(S.settings.hide?'eyeoff':'eye');
   $('#topTitle').textContent=ui.tab==='home'?'Pulso':TABS.find(t=>t[0]===ui.tab)[1];
-  $('#view').innerHTML=({home:vHome,agenda:vAgenda,fin:vFin,debts:vDebts,more:vMore})[ui.tab]();
+  $('.fab').style.display=ui.tab==='news'?'none':'';
+  $('#view').innerHTML=({home:vHome,agenda:vAgenda,fin:vFin,debts:vDebts,news:vNews,more:vMore})[ui.tab]();
 }
 function evItem(e,d){return `<button class="item" data-act="editEvent" data-id="${e.id}"><div class="time num">${e.time||'Dia'}<small>${e.time?'':'todo'}</small></div><div class="bar"></div>
   <div class="main"><div class="t">${esc(e.title)}</div><div class="s">${[e.location,e.repeat!=='none'?({daily:'Todo dia',weekly:'Toda semana',monthly:'Todo mês',yearly:'Todo ano'})[e.repeat]:'',d&&d!==today()?relDay(d):''].filter(Boolean).map(esc).join(' · ')||'Compromisso'}</div></div></button>`}
@@ -736,9 +754,82 @@ function drawLock(){$('#lock').innerHTML=`<svg class="i logo" viewBox="0 0 24 24
   <button class="ghost" data-act="faceUnlock" aria-label="Face ID" ${S.settings.faceCred?'':'style="visibility:hidden"'}>${I('face')}</button><button data-act="pinKey" data-k="0">0</button><button class="ghost" data-act="pinKey" data-k="del" aria-label="Apagar">⌫</button></div>`}
 function unlock(){locked=false;$('#lock').hidden=true;$('#lock').innerHTML='';showPopup()}
 
+/* ---------- notícias ---------- */
+// Para adicionar um tema: inclua um objeto em NEWS_TOPICS com id, nome e as fontes (feeds RSS ou APIs).
+const GN=q=>`https://news.google.com/rss/search?q=${encodeURIComponent(q+' when:2d')}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
+const NEWS_TOPICS=[
+  {id:'dev',name:'Programação',feeds:[{kind:'tabnews',src:'TabNews'},{kind:'hn',src:'Hacker News'},{url:GN('programação OR programador OR desenvolvedores OR "desenvolvimento de software"'),gn:1}]},
+  {id:'tech',name:'Tecnologia',feeds:[{url:'https://tecnoblog.net/feed/',src:'Tecnoblog'},{url:'https://canaltech.com.br/rss/',src:'Canaltech'},{url:'https://olhardigital.com.br/feed/',src:'Olhar Digital'},{url:GN('tecnologia'),gn:1}]},
+  {id:'biz',name:'Negócios',feeds:[{url:'https://www.infomoney.com.br/negocios/feed/',src:'InfoMoney'},{url:GN('negócios empresas'),gn:1}]},
+  {id:'fin',name:'Finanças',feeds:[{url:'https://g1.globo.com/rss/g1/economia/',src:'g1 Economia'},{url:'https://www.infomoney.com.br/economia/feed/',src:'InfoMoney'},{url:GN('economia finanças pessoais'),gn:1}]},
+  {id:'inv',name:'Investimentos',feeds:[{url:'https://www.infomoney.com.br/mercados/feed/',src:'InfoMoney'},{url:'https://www.moneytimes.com.br/feed/',src:'Money Times'},{url:GN('investimentos Ibovespa'),gn:1}]}
+];
+const NKEY='pulso.news',NFRESH=20*60e3;
+let NC={};try{NC=JSON.parse(localStorage.getItem(NKEY)||'{}')||{}}catch(e){NC={}}
+const nsave=()=>{try{localStorage.setItem(NKEY,JSON.stringify(NC))}catch(e){}};
+const nload={};
+const PROXIES=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`];
+async function getText(url,ms=9000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return await r.text()}finally{clearTimeout(t)}}
+async function viaProxies(url,direct){let err;for(const u of (direct?[url]:[]).concat(PROXIES.map(p=>p(url)))){try{const t=await getText(u);if(t&&t.length>40)return t}catch(e){err=e}}throw err||new Error('sem resposta')}
+const decEl=document.createElement('textarea');
+const clean=s=>{decEl.innerHTML=String(s||'').replace(/<[^>]*>/g,' ');return decEl.value.replace(/\s+/g,' ').trim()};
+const imgIn=h=>{const m=/<img[^>]+src=["']([^"']+)["']/i.exec(h||'');return m?m[1]:''};
+const okUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+function mkItem(f,title,link,at,img,src){title=clean(title);if(f.gn){const k=title.lastIndexOf(' - ');if(k>20){src=src||title.slice(k+3);title=title.slice(0,k)}}
+  link=okUrl(String(link||'').trim());if(!title||!link)return null;at=+at||Date.now();if(at>Date.now()+36e5)at=Date.now();
+  return {title,link,at,img:okUrl(img),src:clean(src||f.src||'')}}
+function parseFeed(xml,f){const doc=new DOMParser().parseFromString(xml,'text/xml');if(doc.querySelector('parsererror'))throw new Error('feed inválido');
+  return [...doc.querySelectorAll('item,entry')].slice(0,20).map(it=>{const g=n=>{const e=it.getElementsByTagName(n)[0];return e?e.textContent:''};
+    const ln=it.querySelector('link');const link=ln?(ln.getAttribute('href')||ln.textContent):'';
+    const mc=it.getElementsByTagName('media:content')[0]||it.getElementsByTagName('media:thumbnail')[0];const enc=it.querySelector('enclosure');
+    const img=(mc&&mc.getAttribute('url'))||(enc&&/image/.test(enc.getAttribute('type')||'image')&&enc.getAttribute('url'))||imgIn(g('content:encoded')||g('description'));
+    return mkItem(f,g('title'),link,Date.parse(g('pubDate')||g('published')||g('updated')||g('dc:date')),img,f.gn?g('source'):'')}).filter(Boolean)}
+async function feedItems(f){
+  if(f.kind==='hn'){const j=JSON.parse(await viaProxies('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=20',true));
+    return j.hits.map(h=>mkItem(f,h.title,h.url||`https://news.ycombinator.com/item?id=${h.objectID}`,h.created_at_i*1000,'','Hacker News (EN)')).filter(Boolean)}
+  if(f.kind==='tabnews'){const j=JSON.parse(await viaProxies('https://www.tabnews.com.br/api/v1/contents?page=1&per_page=20&strategy=relevant',true));
+    return j.filter(x=>!x.parent_id).map(x=>mkItem(f,x.title,`https://www.tabnews.com.br/${x.owner_username}/${x.slug}`,Date.parse(x.published_at),'','TabNews')).filter(Boolean)}
+  try{const j=JSON.parse(await getText('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url)));
+    if(j.status==='ok'&&j.items&&j.items.length)return j.items.map(x=>mkItem(f,x.title,x.link,Date.parse(String(x.pubDate||'').replace(' ','T')+'Z'),
+      x.thumbnail||(x.enclosure&&/image/.test(x.enclosure.type||'')&&x.enclosure.link)||imgIn(x.content||x.description),'')).filter(Boolean)}catch(e){}
+  return parseFeed(await viaProxies(f.url),f)}
+const nkey=t=>t.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'').slice(0,60);
+function dedupe(list){const seen=new Set();return list.filter(x=>{const k=nkey(x.title);if(seen.has(k)||seen.has(x.link))return false;seen.add(k);seen.add(x.link);return true})}
+function loadTopic(id){
+  const T=NEWS_TOPICS.find(t=>t.id===id);NC[id]={items:[],at:0,...NC[id],tried:Date.now()};
+  return nload[id]=Promise.allSettled(T.feeds.map(feedItems)).then(rs=>{const all=[];for(const r of rs)if(r.status==='fulfilled')all.push(...r.value);
+    if(all.length){NC[id]={items:dedupe(all.sort((a,b)=>b.at-a.at)).slice(0,40),at:Date.now(),tried:Date.now()}}else NC[id].err=Date.now();nsave()})
+    .finally(()=>{delete nload[id];newsPaint()})}
+const newsIds=()=>{const t=ui.newsTopic;return t==='all'?NEWS_TOPICS.map(x=>x.id):[t]};
+function newsRefresh(force){const now=Date.now(),started=[];
+  for(const id of newsIds()){if(nload[id])continue;const c=NC[id];if(!force&&c&&(now-c.at<NFRESH||now-(c.tried||0)<60e3))continue;started.push(loadTopic(id))}
+  if(started.length)newsPaint();
+  if(force)Promise.all(started).then(()=>{if(newsIds().every(i=>NC[i]&&NC[i].at>=now))toast('Notícias atualizadas');else if(newsIds().some(i=>NC[i]&&NC[i].err>=now))toast('Algumas fontes não responderam')})}
+function newsPaint(){if(ui.tab==='news')$('#view').innerHTML=vNews()}
+const relTime=t=>{const m=Math.round((Date.now()-t)/60000);if(m<1)return 'agora';if(m<60)return `há ${m} min`;const h=Math.round(m/60);if(h<24)return `há ${h} h`;const d=ymd(new Date(t));return d===addDays(today(),-1)?'ontem':fmtDay(d)};
+function newsItem(x,showTp){const tp=showTp&&NEWS_TOPICS.find(t=>t.id===x.tp);
+  return `<a class="item news" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer"><div class="main"><div class="t">${esc(x.title)}</div>
+  <div class="s">${tp?`<span class="ntp">${esc(tp.name)}</span> · `:''}${esc(x.src||'')}${x.src?' · ':''}${relTime(x.at)}</div></div>
+  ${x.img?`<img src="${esc(x.img)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</a>`}
+function vNews(){
+  const t=ui.newsTopic,ids=newsIds(),loading=ids.some(i=>nload[i]);
+  let items=[];for(const i of ids)if(NC[i])items.push(...NC[i].items.map(x=>({...x,tp:i})));
+  items=dedupe(items.sort((a,b)=>b.at-a.at)).slice(0,t==='all'?60:40);
+  const ats=ids.map(i=>NC[i]&&NC[i].at||0).filter(Boolean),at=ats.length?Math.min(...ats):0;
+  const failed=!loading&&!items.length&&ids.some(i=>NC[i]&&NC[i].err);
+  let html=`<div class="chips">${[['all','Tudo'],...NEWS_TOPICS.map(x=>[x.id,x.name])].map(([k,l])=>`<button class="chip ${t===k?'on':''}" data-act="newsTopic" data-id="${k}">${esc(l)}</button>`).join('')}</div>
+  <div class="nmeta"><span>${loading?'Buscando notícias…':at?'Atualizado '+relTime(at):'Ainda não carregado'}</span><button data-act="newsReload" class="${loading?'spin':''}" ${loading?'disabled':''}>${I('refresh')}Atualizar</button></div>`;
+  if(items.length)html+=`<div class="list">${items.map(x=>newsItem(x,t==='all')).join('')}</div>
+    <p class="small muted" style="text-align:center;margin:0">Toque numa notícia para abrir a matéria completa no site da fonte.</p>`;
+  else if(loading)html+=`<div class="list">${[1,2,3,4,5].map(()=>`<div class="item"><div class="main" style="display:grid;gap:8px"><div class="skel"></div><div class="skel" style="width:70%"></div><div class="skel" style="width:35%;height:10px"></div></div></div>`).join('')}</div>`;
+  else html+=`<div class="list"><div class="empty">${failed?'Não foi possível carregar as notícias agora.<br>Confira a internet e toque em <b>Atualizar</b>.':'Toque em <b>Atualizar</b> para buscar as notícias.'}</div></div>`;
+  return html}
+
 /* ---------- actions ---------- */
 const A={
-  tab(d){ui.tab=d.tab;try{sessionStorage.setItem('pulso.tab',d.tab)}catch(e){}render();scrollTo(0,0)},
+  tab(d){ui.tab=d.tab;try{sessionStorage.setItem('pulso.tab',d.tab)}catch(e){}render();scrollTo(0,0);if(d.tab==='news')newsRefresh(false)},
+  newsTopic(d){ui.newsTopic=d.id;try{localStorage.setItem('pulso.newsTopic',d.id)}catch(e){}haptic();newsPaint();scrollTo(0,0);newsRefresh(false)},
+  newsReload(){haptic();newsRefresh(true)},
   toggleHide(){S.settings.hide=!S.settings.hide;haptic();save();render()},
   addMenu(){haptic();sheet('Adicionar',`<div class="list" style="background:var(--s2)">
     <button type="button" class="item" data-act="newEvent">${I('cal')}<div class="main"><div class="t">Compromisso</div><div class="s">Evento, consulta, reunião</div></div></button>
@@ -826,10 +917,10 @@ document.addEventListener('submit',e=>{if(e.target.id!=='qa')return;e.preventDef
 $('#importFile').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!d.v||!Array.isArray(d.events))throw 0;
   confirmBox('Restaurar backup?',`Isso substitui os dados atuais por ${d.events.length} compromissos, ${d.tx.length} lançamentos e ${d.debts.length} dívidas.`,'Restaurar',()=>{S=d;S.lastCheck=Date.now();normalize();save();render();toast('Backup restaurado')})}catch(err){toast('Esse arquivo não é um backup do Pulso')}};rd.readAsText(file)});
 addEventListener('scroll',()=>$('#top').classList.toggle('scrolled',scrollY>4),{passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup();if(ui.tab==='news')newsRefresh(false)}});
 
 /* ---------- boot ---------- */
-load();save();render();
+load();save();if(!NEWS_TOPICS.some(t=>t.id===ui.newsTopic))ui.newsTopic='all';render();if(ui.tab==='news')newsRefresh(false);
 if(S.settings.pinHash)showLock();
 check();setInterval(check,20000);
 setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home')render()},60000);
