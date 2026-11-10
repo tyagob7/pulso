@@ -266,6 +266,14 @@ button.item:active,.item.tap:active{background:var(--s2)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .skel{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--s2),var(--s3),var(--s2));background-size:200% 100%;animation:shim 1.2s infinite}
 @keyframes shim{to{background-position:-200% 0}}
+/* mercado */
+.mkt .stat .n{font-size:18px}
+.mkt .stat .c{font-size:12px;font-weight:700;margin-top:2px}
+.up{color:var(--ok)} .dn{color:var(--red2)}
+.tk{width:58px;flex:none;font-weight:800;font-size:13.5px;letter-spacing:.02em}
+.mkt .item .v small{display:block;font-size:12px;font-weight:700}
+.mkt .item{padding:11px 14px}
+.mnote{color:var(--mu);font-size:12px;margin:8px 2px 0}
 /* leitor */
 #reader{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:none}
 #reader.on{display:block;animation:rin .22s ease-out}
@@ -417,6 +425,11 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('
 const ui={tab:'home',calMonth:ym(today()),sel:today(),finMonth:ym(today()),finProf:'all',debtProf:'all',newsTopic:'all'};
 try{const n=localStorage.getItem('pulso.newsTopic');if(n)ui.newsTopic=n}catch(e){}
 try{const t=sessionStorage.getItem('pulso.tab');if(t)ui.tab=t}catch(e){}
+// Finanças e Dívidas estão congeladas: os dados continuam guardados (e no backup), só ficam fora do app.
+// Para reativar, troque FIN_ON para true.
+const FIN_ON=false;
+const DEBTS=()=>FIN_ON?S.debts:[];
+if(!FIN_ON&&['fin','debts'].includes(ui.tab))ui.tab='home';
 const prof=id=>S.profiles.find(p=>p.id===id);
 const docTag=id=>{const p=prof(id);if(!p)return '';return `<span class="doc ${p.type==='CNPJ'?'cnpj':''}">${p.type}</span>`};
 
@@ -435,7 +448,7 @@ function debtInfo(d){
   else if(next&&next.due<=addDays(t,3)){status='warn';label=next.due===t?'Vence hoje':'Vence em breve'}
   return {list,overdue,next,paidCount,remaining,n,done,status,label};
 }
-function duesOn(day){const r=[];for(const d of S.debts){for(const x of debtInfo(d).list)if(x.due===day)r.push({d,x})}return r}
+function duesOn(day){const r=[];for(const d of DEBTS()){for(const x of debtInfo(d).list)if(x.due===day)r.push({d,x})}return r}
 function monthTx(m,p='all'){return S.tx.filter(x=>ym(x.date)===m&&(p==='all'||x.profileId===p))}
 function sums(list){let i=0,o=0;for(const x of list)x.type==='in'?i+=x.amount:o+=x.amount;return {i,o,b:i-o}}
 function profileTotals(){return S.profiles.map(p=>{let rem=0,month=0,late=0;for(const d of S.debts.filter(d=>d.profileId===p.id)){const f=debtInfo(d);if(f.done)continue;rem+=f.remaining;month+=d.value;late+=f.overdue.length}return {p,rem,month,late}})}
@@ -446,7 +459,7 @@ function collectReminders(from,to){
   const at=(day,time)=>{const b=pd(day);const[h,m]=(time||'09:00').split(':');b.setHours(+h,+m,0,0);return b.getTime()};
   for(const ev of S.events){for(let d=t0;d<=t1;d=addDays(d,1)){if(!occursOn(ev,d))continue;const base=at(d,ev.time||S.settings.allDayTime);
     for(const m of ev.remind||[]){const a=base-m*60000;if(a>from&&a<=to)res.push({key:`e|${ev.id}|${d}|${m}`,at:a,alert:ev.alert||S.settings.alert,title:ev.title,body:`${m?'Em '+fmtMin(m)+' · ':''}${relDay(d)}${ev.time?' às '+ev.time:''}${ev.location?' · '+ev.location:''}`,go:'agenda',day:d})}}}
-  for(const d of S.debts){const f=debtInfo(d);for(const x of f.list){if(x.paid||x.due<t0||x.due>t1)continue;const base=at(x.due,S.settings.billTime);
+  for(const d of DEBTS()){const f=debtInfo(d);for(const x of f.list){if(x.paid||x.due<t0||x.due>t1)continue;const base=at(x.due,S.settings.billTime);
     for(const m of d.remind||[]){const a=base-m*60000;if(a>from&&a<=to)res.push({key:`d|${d.id}|${x.due}|${m}`,at:a,alert:d.alert||S.settings.alert,title:`${d.name}${f.n?` · parcela ${x.i}/${f.n}`:''}`,body:`${money(d.value)} vence ${relDay(x.due)}`,go:'debts',debt:d.id})}}}
   for(const s of S.snoozes)if(s.at>from&&s.at<=to)res.push(s);
   return res.sort((a,b)=>a.at-b.at);
@@ -480,7 +493,7 @@ function showPopup(){
     <div class="b2"><button class="btn" data-act="snooze">Adiar 10 min</button><button class="btn primary" data-act="popOk">Ok</button></div>
     ${x.go?`<button class="btn ghost" data-act="popGo" style="margin-top:6px">Abrir</button>`:''}</div></div>`;
 }
-function updateBadge(){try{if(!('setAppBadge' in navigator))return;const t=today();let n=eventsOn(t).length;for(const d of S.debts){const f=debtInfo(d);n+=f.overdue.length+(f.next&&f.next.due===t?1:0)}n?navigator.setAppBadge(n):navigator.clearAppBadge()}catch(e){}}
+function updateBadge(){try{if(!('setAppBadge' in navigator))return;const t=today();let n=eventsOn(t).length;for(const d of DEBTS()){const f=debtInfo(d);n+=f.overdue.length+(f.next&&f.next.due===t?1:0)}n?navigator.setAppBadge(n):navigator.clearAppBadge()}catch(e){}}
 
 /* ---------- toast / modal / sheet ---------- */
 let toastT;
@@ -506,9 +519,10 @@ const EV_REM=[[0,'Na hora'],[10,'10 min'],[30,'30 min'],[60,'1 h'],[120,'2 h'],[
 const DEBT_REM=[[0,'No dia'],[1440,'1 dia antes'],[4320,'3 dias antes'],[10080,'7 dias antes']];
 
 /* ---------- views ---------- */
+const FROZEN_TABS=['fin','debts'];
 const TABS=[['home','Início','home'],['agenda','Agenda','cal'],['fin','Finanças','wallet'],['debts','Dívidas','card'],['news','Notícias','news'],['more','Mais','more']];
-function renderTabs(){let late=0;for(const d of S.debts)late+=debtInfo(d).overdue.length;
-  $('#tabs').innerHTML=TABS.map(([k,l,i])=>`<button class="tab ${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}" aria-label="${l}">${I(i)}<span>${l}</span>${k==='debts'&&late?`<b class="dot">${late}</b>`:''}</button>`).join('')}
+function renderTabs(){let late=0;for(const d of DEBTS())late+=debtInfo(d).overdue.length;
+  $('#tabs').innerHTML=TABS.filter(t=>FIN_ON||!FROZEN_TABS.includes(t[0])).map(([k,l,i])=>`<button class="tab ${ui.tab===k?'on':''}" data-act="tab" data-tab="${k}" aria-label="${l}">${I(i)}<span>${l}</span>${k==='debts'&&late?`<b class="dot">${late}</b>`:''}</button>`).join('')}
 function render(){
   renderTabs();
   $('#eyeBtn').innerHTML=I(S.settings.hide?'eyeoff':'eye');
@@ -527,21 +541,23 @@ function vHome(){
   const greet=h<5?'Boa noite':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
   const evs=eventsOn(t);
   const late=[],soon=[];
-  for(const db of S.debts){const f=debtInfo(db);for(const x of f.overdue)late.push({d:db,x});for(const x of f.list)if(!x.paid&&x.due>=t&&x.due<=addDays(t,7))soon.push({d:db,x})}
+  for(const db of DEBTS()){const f=debtInfo(db);for(const x of f.overdue)late.push({d:db,x});for(const x of f.list)if(!x.paid&&x.due>=t&&x.due<=addDays(t,7))soon.push({d:db,x})}
   soon.sort((a,b)=>a.x.due.localeCompare(b.x.due));
   const lateSum=late.reduce((s,a)=>s+a.d.value,0);
   const m=sums(monthTx(ym(t)));
-  const hasEx=S.events.some(e=>e.ex)||S.tx.some(e=>e.ex)||S.debts.some(e=>e.ex);
+  const hasEx=S.events.some(e=>e.ex)||(FIN_ON&&(S.tx.some(e=>e.ex)||S.debts.some(e=>e.ex)));
   const tomorrow=eventsOn(addDays(t,1));
   let html=`<section class="hero"><div class="k">${greet}</div><h1>${DIAF[d.getDay()]}, ${d.getDate()} de ${MES[d.getMonth()]}</h1>
     <p>${evs.length?`${evs.length} compromisso${evs.length>1?'s':''} hoje`:'Nenhum compromisso hoje'}${soon.length?` · ${soon.length} vencimento${soon.length>1?'s':''} na semana`:''}</p></section>`;
-  html+=`<form class="qa" id="qa"><input id="qaIn" enterkeyhint="go" placeholder='"dentista amanhã 15h" ou "gastei 45 almoço"' aria-label="Adicionar rápido"><button type="submit">Criar</button></form>`;
+  html+=`<form class="qa" id="qa"><input id="qaIn" enterkeyhint="go" placeholder='${FIN_ON?'"dentista amanhã 15h" ou "gastei 45 almoço"':'"dentista amanhã 15h"'}' aria-label="Adicionar rápido"><button type="submit">Criar</button></form>`;
   if(hasEx)html+=`<div class="banner"><div class="ic">${I('spark')}</div><div><b>Você está vendo exemplos</b><span>Toque para apagar e começar com seus dados.</span></div><button class="x" data-act="clearEx">Apagar</button></div>`;
   if(isIOS&&!standalone()&&!inFrame)html+=`<button class="banner" data-act="installHelp"><div class="ic">${I('phone')}</div><div><b>Instale na Tela de Início</b><span>Libera notificações, Face ID e modo tela cheia.</span></div><span class="x">Como?</span></button>`;
-  else if('Notification' in window&&Notification.permission==='default')html+=`<button class="banner" data-act="enableNotif"><div class="ic">${I('bell')}</div><div><b>Ativar notificações</b><span>Para receber os lembretes de compromissos e contas.</span></div><span class="x">Ativar</span></button>`;
+  else if('Notification' in window&&Notification.permission==='default')html+=`<button class="banner" data-act="enableNotif"><div class="ic">${I('bell')}</div><div><b>Ativar notificações</b><span>Para receber os lembretes dos seus compromissos.</span></div><span class="x">Ativar</span></button>`;
   if(late.length)html+=`<button class="banner alert" data-act="tab" data-tab="debts"><div class="ic">${I('alert')}</div><div><b>${late.length} conta${late.length>1?'s':''} em atraso</b><span class="num">${money(lateSum)} vencido</span></div><span class="x">Ver</span></button>`;
   html+=`<section><h2 class="sec">Hoje <button data-act="tab" data-tab="agenda">Agenda</button></h2><div class="list">${evs.map(e=>evItem(e)).join('')||'<div class="empty">Dia livre. Toque em + para agendar.</div>'}</div>
     ${tomorrow.length?`<p class="small muted" style="margin:8px 2px 0">Amanhã: ${tomorrow.map(e=>esc((e.time?e.time+' ':'')+e.title)).join(' · ')}</p>`:''}</section>`;
+  html+=vMarket();
+  if(!FIN_ON)return html;
   html+=`<section><h2 class="sec">Vencimentos · 7 dias <button data-act="tab" data-tab="debts">Dívidas</button></h2><div class="list">${soon.map(a=>dueItem(a.d,a.x,true)).join('')||'<div class="empty">Nada vence nos próximos 7 dias.</div>'}</div></section>`;
   html+=`<section><h2 class="sec">${MES[d.getMonth()]} <button data-act="tab" data-tab="fin">Finanças</button></h2><div class="stats num">
     <div class="stat"><div class="l">Entradas</div><div class="n in">${money(m.i)}</div></div><div class="stat"><div class="l">Saídas</div><div class="n">${money(m.o)}</div></div>
@@ -564,7 +580,7 @@ function vAgenda(){
   return `<div class="mnav"><h3>${monthName(ui.calMonth)}</h3><div class="navb"><button class="icon-btn" data-act="calMonth" data-n="-1" aria-label="Mês anterior">${I('left')}</button>
     <button class="icon-btn" data-act="calToday" aria-label="Hoje" style="width:auto;padding:0 12px;font-weight:700;font-size:14px">Hoje</button><button class="icon-btn" data-act="calMonth" data-n="1" aria-label="Próximo mês">${I('right')}</button></div></div>
     <div class="cal"><div class="wd">${DIA.map(d=>`<span>${d}</span>`).join('')}</div><div class="grid">${cells}</div></div>
-    <div class="legend"><span><i class="o"></i>Compromisso</span><span><i style="background:var(--warn)"></i>Vencimento</span><span><i></i>Pago</span></div>
+    <div class="legend"><span><i class="o"></i>Compromisso</span>${FIN_ON?'<span><i style="background:var(--warn)"></i>Vencimento</span><span><i></i>Pago</span>':''}</div>
     <section><h2 class="sec">${relDay(ui.sel)==='hoje'?'Hoje':relDay(ui.sel)==='amanhã'?'Amanhã':fmtDay(ui.sel)} <button data-act="newEvent" data-d="${ui.sel}">+ Compromisso</button></h2>
     <div class="list">${evs.map(e=>evItem(e)).join('')}${du.map(a=>dueItem(a.d,a.x)).join('')}${!evs.length&&!du.length?'<div class="empty">Nada neste dia.</div>':''}</div></section>
     <button class="btn" data-act="exportAllIcs">${I('cal')} Enviar agenda para o Calendário do iPhone</button>
@@ -607,11 +623,11 @@ function vMore(){
   const st=S.settings;
   const nState=!('Notification' in window)?(isIOS&&!standalone()?'Instale na Tela de Início primeiro':'Não suportado neste navegador'):Notification.permission==='granted'?'Ativadas':Notification.permission==='denied'?'Bloqueadas nos Ajustes do iPhone':'Desativadas';
   const total=S.events.length+S.tx.length+S.debts.length;
-  return `<section><h2 class="sec">CPF e CNPJ <button data-act="newProfile">+ Adicionar</button></h2><div class="list">${S.profiles.map(p=>`<button class="item" data-act="editProfile" data-id="${p.id}">${I(p.type==='CNPJ'?'bld':'user')}<div class="main"><div class="t">${esc(p.name)} ${docTag(p.id)}</div><div class="s num">${hideDoc(p.doc,p.type)||'Documento não informado'}</div></div>${I('right')}</button>`).join('')}</div></section>
+  return `${FIN_ON?`<section><h2 class="sec">CPF e CNPJ <button data-act="newProfile">+ Adicionar</button></h2><div class="list">${S.profiles.map(p=>`<button class="item" data-act="editProfile" data-id="${p.id}">${I(p.type==='CNPJ'?'bld':'user')}<div class="main"><div class="t">${esc(p.name)} ${docTag(p.id)}</div><div class="s num">${hideDoc(p.doc,p.type)||'Documento não informado'}</div></div>${I('right')}</button>`).join('')}</div></section>`:''}
   <section class="set"><h2 class="sec">Lembretes</h2><div class="list">
     <button class="item" data-act="enableNotif">${I('bell')}<div class="main"><div class="t">Notificações</div><div class="s">${nState}</div></div>${I('right')}</button>
     <button class="item" data-act="testRem">${I('spark')}<div class="main"><div class="t">Testar lembrete</div><div class="s">Dispara uma notificação e um pop-up agora</div></div></button>
-    <button class="item" data-act="remSettings">${I('clock')}<div class="main"><div class="t">Padrões de aviso</div><div class="s">${ALERTS.find(a=>a[0]===st.alert)[1]} · contas às ${st.billTime} · dia inteiro às ${st.allDayTime}</div></div>${I('right')}</button>
+    <button class="item" data-act="remSettings">${I('clock')}<div class="main"><div class="t">Padrões de aviso</div><div class="s">${ALERTS.find(a=>a[0]===st.alert)[1]}${FIN_ON?` · contas às ${st.billTime}`:''} · dia inteiro às ${st.allDayTime}</div></div>${I('right')}</button>
   </div></section>
   <section class="set"><h2 class="sec">Segurança e privacidade</h2><div class="list">
     <button class="item" data-act="pinSetup">${I('lock')}<div class="main"><div class="t">Bloqueio com senha</div><div class="s">${st.pinHash?'Ativado':'Desativado'}</div></div>${I('right')}</button>
@@ -728,7 +744,7 @@ function quickParse(raw){
   let s=raw.trim();const low=s.toLowerCase();
   const isOut=W('gastei|paguei|comprei|gasto|despesa').test(low),isIn=W('recebi|ganhei|receita|entrada|vendi').test(low);
   const mm=low.match(/(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?!\s*(?:h|:|\/))/);
-  if((isOut||isIn)&&mm){const type=isIn&&!isOut?'in':'out';
+  if(FIN_ON&&(isOut||isIn)&&mm){const type=isIn&&!isOut?'in':'out';
     let desc=(s.slice(0,mm.index)+' '+s.slice(mm.index+mm[0].length)).replace(W('gastei|paguei|comprei|gasto|despesa|recebi|ganhei|receita|entrada|vendi','g'),'').replace(/r\$/gi,'').replace(W('reais|real|com|de|no|na|em','g'),' ').replace(/\s+/g,' ').trim();
     desc=desc.replace(/^./,c=>c.toUpperCase());return {kind:'tx',type,amount:parseMoney(mm[1]),desc,cat:guessCat(raw,type)}}
   let date=today(),time='';const t=today();
@@ -854,6 +870,54 @@ function vNews(){
   else html+=`<div class="list"><div class="empty">${failed?'Não foi possível carregar as notícias agora.<br>Confira a internet e toque em <b>Atualizar</b>.':'Toque em <b>Atualizar</b> para buscar as notícias.'}</div></div>`;
   return html}
 
+/* ---------- mercado (cotações) ---------- */
+// Para mudar as ações exibidas, edite STOCKS (código da B3 + nome).
+const FX=[['USD','Dólar'],['EUR','Euro']];
+const STOCKS=[['PETR4','Petrobras'],['VALE3','Vale'],['ITUB4','Itaú'],['BBAS3','Banco do Brasil'],['BBDC4','Bradesco'],['WEGE3','WEG'],['ABEV3','Ambev'],['B3SA3','B3']];
+const IDX=['^BVSP','Ibovespa'];
+const MKEY='pulso.mkt',MFRESH=5*60e3;
+let MK={};try{MK=JSON.parse(localStorage.getItem(MKEY)||'{}')||{}}catch(e){MK={}}
+let mkLoading=false;
+const ysym=s=>s.startsWith('^')?s:s+'.SA';
+const BRL2=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});
+const BRL4=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:3,maximumFractionDigits:3});
+const PTS=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+const pct=v=>v==null||isNaN(v)?'':`${v>0?'▲':v<0?'▼':''} ${Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}%`;
+const cls=v=>v>0?'up':v<0?'dn':'muted';
+async function getJSON(url,direct=true){return JSON.parse(await viaProxies(url,direct))}
+async function loadFX(){const j=await getJSON(`https://economia.awesomeapi.com.br/json/last/${FX.map(f=>f[0]+'-BRL').join(',')}`);const r={};
+  for(const[c]of FX){const x=j[c+'BRL'];if(x)r[c]={p:+x.bid,c:+x.pctChange,t:(+x.timestamp||0)*1000}}if(!Object.keys(r).length)throw 0;return r}
+function fromMeta(m){const p=+m.regularMarketPrice,prev=+(m.chartPreviousClose||m.previousClose);return p?{p,c:prev?(p/prev-1)*100:null,t:(+m.regularMarketTime||0)*1000}:null}
+async function loadStocks(){const syms=[IDX[0],...STOCKS.map(s=>s[0])].map(ysym),r={};
+  try{const j=await getJSON(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(syms.join(','))}&range=1d&interval=1d`,false);
+    for(const x of (j.spark&&j.spark.result)||[]){const m=x.response&&x.response[0]&&x.response[0].meta;const q=m&&fromMeta(m);if(q)r[x.symbol]=q}}catch(e){}
+  const miss=syms.filter(s=>!r[s]);
+  await Promise.all(miss.map(async s=>{try{const j=await getJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=1d&interval=1d`,false);
+    const q=fromMeta(j.chart.result[0].meta);if(q)r[s]=q}catch(e){}
+    if(!r[s]&&!s.startsWith('^'))try{const j=await getJSON(`https://brapi.dev/api/quote/${s.replace('.SA','')}`);const x=j.results[0];
+      r[s]={p:+x.regularMarketPrice,c:+x.regularMarketChangePercent,t:Date.parse(x.regularMarketTime)||Date.now()}}catch(e){}}));
+  if(!Object.keys(r).length)throw 0;return r}
+async function marketRefresh(force){
+  if(mkLoading||(!force&&MK.at&&Date.now()-MK.at<MFRESH)||(!force&&Date.now()-(MK.tried||0)<60e3))return;
+  mkLoading=true;MK.tried=Date.now();marketPaint();
+  const[fx,st]=await Promise.allSettled([loadFX(),loadStocks()]);
+  if(fx.status==='fulfilled')MK.fx=fx.value;if(st.status==='fulfilled')MK.st=st.value;
+  if(fx.status==='fulfilled'||st.status==='fulfilled')MK.at=Date.now();
+  MK.err=fx.status==='rejected'&&st.status==='rejected';
+  try{localStorage.setItem(MKEY,JSON.stringify(MK))}catch(e){}
+  mkLoading=false;marketPaint();if(force)toast(MK.err?'Não foi possível atualizar as cotações':'Cotações atualizadas')}
+function marketPaint(){const el=$('#mkt');if(el&&ui.tab==='home')el.outerHTML=vMarket()}
+const hhmm=t=>{const d=new Date(t);return `${pad(d.getHours())}:${pad(d.getMinutes())}`};
+function vMarket(){
+  const fx=MK.fx||{},st=MK.st||{},ib=st[IDX[0]];
+  const tile=(l,q,fmt)=>`<div class="stat"><div class="l">${l}</div><div class="n num">${q?fmt(q.p):mkLoading?'<div class="skel" style="margin-top:6px"></div>':'—'}</div><div class="c num ${q?cls(q.c):''}">${q?pct(q.c):'&nbsp;'}</div></div>`;
+  const rows=STOCKS.map(([k,n])=>{const q=st[ysym(k)];return `<div class="item"><div class="tk">${k}</div><div class="main"><div class="s">${esc(n)}</div></div>
+    <div class="v num">${q?BRL2.format(q.p):mkLoading?'…':'—'}${q?`<small class="${cls(q.c)}">${pct(q.c)}</small>`:''}</div></div>`}).join('');
+  const note=mkLoading&&!MK.at?'Buscando cotações…':MK.at?`Atualizado às ${hhmm(MK.at)} · ações com atraso de até 15 min`:MK.err?'Sem conexão com as cotações agora.':'';
+  return `<section id="mkt" class="mkt"><h2 class="sec">Mercado <button data-act="mktReload">${mkLoading?'Atualizando…':'Atualizar'}</button></h2>
+    <div class="stats">${tile('Dólar',fx.USD,v=>BRL4.format(v))}${tile('Euro',fx.EUR,v=>BRL4.format(v))}${tile('Ibovespa',ib,v=>PTS.format(v))}</div>
+    <div class="list" style="margin-top:8px">${rows}</div>${note?`<p class="mnote">${note}</p>`:''}</section>`}
+
 /* ---------- leitor de notícias ---------- */
 const NART={};// cache em memória: link -> {html,img} | {fail:true}
 const JUNK='script,style,noscript,iframe,form,button,input,select,textarea,svg,canvas,video,audio,nav,header,footer,aside,[hidden],[aria-hidden="true"],[role="navigation"],[role="complementary"],.share,.social,.related,.newsletter,.comments,.advertisement,.publicidade,.ads,.ad';
@@ -932,15 +996,16 @@ addEventListener('popstate',()=>{if(readerOpen)closeReader(true)});
 
 /* ---------- actions ---------- */
 const A={
-  tab(d){ui.tab=d.tab;try{sessionStorage.setItem('pulso.tab',d.tab)}catch(e){}render();scrollTo(0,0);if(d.tab==='news')newsRefresh(false)},
+  tab(d){ui.tab=d.tab;try{sessionStorage.setItem('pulso.tab',d.tab)}catch(e){}render();scrollTo(0,0);if(d.tab==='news')newsRefresh(false);if(d.tab==='home')marketRefresh(false)},
   newsTopic(d){ui.newsTopic=d.id;try{localStorage.setItem('pulso.newsTopic',d.id)}catch(e){}haptic();newsPaint();scrollTo(0,0);newsRefresh(false)},
   newsReload(){haptic();newsRefresh(true)},
+  mktReload(){haptic();marketRefresh(true)},
   readNews(d){const x=NVIEW[+d.i];if(x){haptic();openReader(x)}},
   closeReader(){closeReader()},
   readerFont(){const n=[16,18,20,22],v=n[(n.indexOf(rfs())+1)%n.length];try{localStorage.setItem('pulso.rfs',v)}catch(e){}const t=$('#reader .rtext');if(t)t.style.setProperty('--rfs',v+'px');haptic()},
   shareNews(){const x=readerOpen;if(x)navigator.share({title:x.title,url:x.link}).catch(()=>{})},
   toggleHide(){S.settings.hide=!S.settings.hide;haptic();save();render()},
-  addMenu(){haptic();sheet('Adicionar',`<div class="list" style="background:var(--s2)">
+  addMenu(){haptic();if(!FIN_ON){eventForm(null,{});return}sheet('Adicionar',`<div class="list" style="background:var(--s2)">
     <button type="button" class="item" data-act="newEvent">${I('cal')}<div class="main"><div class="t">Compromisso</div><div class="s">Evento, consulta, reunião</div></div></button>
     <button type="button" class="item" data-act="newTx" data-type="out">${I('wallet')}<div class="main"><div class="t">Despesa</div><div class="s">Algo que você pagou</div></div></button>
     <button type="button" class="item" data-act="newTx" data-type="in">${I('wallet')}<div class="main"><div class="t">Receita</div><div class="s">Dinheiro que entrou</div></div></button>
@@ -974,7 +1039,7 @@ const A={
     if(S.profiles.length<2){toast('Mantenha ao menos um CPF ou CNPJ');return}confirmBox('Excluir documento?','Ele deixa de aparecer nos filtros.','Excluir',()=>{S.profiles=S.profiles.filter(p=>p.id!==d.id);save();closeSheet();render()})},
   icsEvent(d){const e=S.events.find(x=>x.id===d.id);if(e)deliver(`${e.title}.ics`,wrapIcs([evIcs(e)]),'text/calendar')},
   icsDebt(d){const db=S.debts.find(x=>x.id===d.id);const v=db&&debtIcs(db);if(!v){toast('Não há parcelas em aberto');return}deliver(`${db.name}.ics`,wrapIcs([v]),'text/calendar')},
-  exportAllIcs(){const list=[...S.events.filter(e=>e.repeat!=='none'||e.date>=today()).map(evIcs),...S.debts.map(debtIcs).filter(Boolean)];if(!list.length){toast('Nada para enviar ainda');return}deliver('pulso-agenda.ics',wrapIcs(list),'text/calendar')},
+  exportAllIcs(){const list=[...S.events.filter(e=>e.repeat!=='none'||e.date>=today()).map(evIcs),...DEBTS().map(debtIcs).filter(Boolean)];if(!list.length){toast('Nada para enviar ainda');return}deliver('pulso-agenda.ics',wrapIcs(list),'text/calendar')},
   clearEx(){confirmBox('Apagar exemplos?','Compromissos, lançamentos e dívidas de exemplo serão removidos. Seus dados ficam.','Apagar',()=>{S.events=S.events.filter(e=>!e.ex);S.tx=S.tx.filter(e=>!e.ex);S.debts=S.debts.filter(e=>!e.ex);save();render();toast('Pronto, tudo limpo para você')})},
   async enableNotif(){
     if(!('Notification' in window)){if(isIOS&&!standalone())A.installHelp();else toast('Este navegador não suporta notificações');return}
@@ -988,9 +1053,9 @@ const A={
   remSettings(){const st=S.settings;sheet('Padrões de aviso',`
     <div class="f"><span>Tipo de aviso padrão</span>${seg('alert',ALERTS,st.alert,'red')}</div>
     <div class="f"><span>Compromissos: avisar antes</span>${checks('evRemind',EV_REM,st.evRemind)}</div>
-    <div class="f"><span>Contas: avisar</span>${checks('debtRemind',DEBT_REM,st.debtRemind)}</div>
-    <div class="row2"><label class="f"><span>Horário dos avisos de contas</span><input type="time" name="billTime" value="${st.billTime}"></label><label class="f"><span>Compromisso sem hora avisa às</span><input type="time" name="allDayTime" value="${st.allDayTime}"></label></div>
-    <div class="f"><span>Ao marcar parcela paga</span>${seg('payToTx',[['1','Lançar em Finanças'],['0','Só marcar']],st.payToTx?'1':'0')}</div>
+    <div class="f" ${FIN_ON?'':'hidden'}><span>Contas: avisar</span>${checks('debtRemind',DEBT_REM,st.debtRemind)}</div>
+    <div class="row2"><label class="f" ${FIN_ON?'':'hidden'}><span>Horário dos avisos de contas</span><input type="time" name="billTime" value="${st.billTime}"></label><label class="f"><span>Compromisso sem hora avisa às</span><input type="time" name="allDayTime" value="${st.allDayTime}"></label></div>
+    <div class="f" ${FIN_ON?'':'hidden'}><span>Ao marcar parcela paga</span>${seg('payToTx',[['1','Lançar em Finanças'],['0','Só marcar']],st.payToTx?'1':'0')}</div>
     <button class="btn primary" type="submit">Salvar</button>`,fd=>{Object.assign(st,{alert:fd.get('alert'),evRemind:fd.getAll('evRemind').map(Number),debtRemind:fd.getAll('debtRemind').map(Number),billTime:fd.get('billTime')||'09:00',allDayTime:fd.get('allDayTime')||'09:00',payToTx:fd.get('payToTx')==='1'});save();render();toast('Padrões salvos')})},
   pinSetup(){const has=!!S.settings.pinHash;sheet(has?'Senha do app':'Criar senha',`
     ${has?'<p class="muted" style="margin:0">Digite uma nova senha para trocar, ou desative o bloqueio.</p>':'<p class="muted" style="margin:0">O Pulso pede a senha ao abrir e depois de 1 minuto fora do app.</p>'}
@@ -1026,13 +1091,14 @@ document.addEventListener('submit',e=>{if(e.target.id!=='qa')return;e.preventDef
 $('#importFile').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!d.v||!Array.isArray(d.events))throw 0;
   confirmBox('Restaurar backup?',`Isso substitui os dados atuais por ${d.events.length} compromissos, ${d.tx.length} lançamentos e ${d.debts.length} dívidas.`,'Restaurar',()=>{S=d;S.lastCheck=Date.now();normalize();save();render();toast('Backup restaurado')})}catch(err){toast('Esse arquivo não é um backup do Pulso')}};rd.readAsText(file)});
 addEventListener('scroll',()=>$('#top').classList.toggle('scrolled',scrollY>4),{passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup();if(ui.tab==='news')newsRefresh(false)}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false)}});
 
 /* ---------- boot ---------- */
-load();save();if(!NEWS_TOPICS.some(t=>t.id===ui.newsTopic))ui.newsTopic='all';render();if(ui.tab==='news')newsRefresh(false);
+load();save();if(!NEWS_TOPICS.some(t=>t.id===ui.newsTopic))ui.newsTopic='all';render();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false);
 if(S.settings.pinHash)showLock();
 check();setInterval(check,20000);
-setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home')render()},60000);
+setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home'&&document.activeElement!==$('#qaIn'))render()},60000);
+setInterval(()=>{if(!document.hidden&&ui.tab==='home')marketRefresh(false)},60000);
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator&&!inFrame&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{});
   navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.go)A.tab({tab:e.data.go})})}
