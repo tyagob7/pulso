@@ -257,7 +257,11 @@ button.item:active,.item.tap:active{background:var(--s2)}
 
 .item.news .t{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.3;font-size:15px}
 .item.news .s{margin-top:5px;white-space:normal}
-.item.news img{width:76px;height:76px;border-radius:12px;object-fit:cover;flex:none;background:var(--s2)}
+.nth{position:relative;width:84px;height:84px;border-radius:12px;overflow:hidden;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,hsl(var(--h) 42% 28%),hsl(var(--h) 34% 13%))}
+.nth span{font-weight:800;font-size:28px;color:rgba(255,255,255,.5);letter-spacing:-.02em}
+.nth img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s}
+.nth img.ld{opacity:1}
 .ntp{color:var(--red2);font-weight:600}
 .chip.addt{color:var(--red2);border-color:var(--redline);background:none}
 .tlist .item{padding:10px 8px 10px 14px}
@@ -533,6 +537,7 @@ function render(){
   $('#eyeBtn').innerHTML=I(S.settings.hide?'eyeoff':'eye');
   $('#topTitle').textContent=ui.tab==='home'?'Pulso':TABS.find(t=>t[0]===ui.tab)[1];
   $('.fab').style.display=ui.tab==='news'?'none':'';
+  setTimeout(()=>ui.tab==='news'&&ogObserve());
   $('#view').innerHTML=({home:vHome,agenda:vAgenda,fin:vFin,debts:vDebts,news:vNews,more:vMore})[ui.tab]();
 }
 function evItem(e,d){return `<button class="item" data-act="editEvent" data-id="${e.id}"><div class="time num">${e.time||'Dia'}<small>${e.time?'':'todo'}</small></div><div class="bar"></div>
@@ -838,7 +843,7 @@ function parseFeed(xml,f){const doc=new DOMParser().parseFromString(xml,'text/xm
   return [...doc.querySelectorAll('item,entry')].slice(0,20).map(it=>{const g=n=>{const e=it.getElementsByTagName(n)[0];return e?e.textContent:''};
     const ln=it.querySelector('link');const link=ln?(ln.getAttribute('href')||ln.textContent):'';
     const mc=it.getElementsByTagName('media:content')[0]||it.getElementsByTagName('media:thumbnail')[0];const enc=it.querySelector('enclosure');
-    const img=(f.bing&&g('News:Image'))||(mc&&mc.getAttribute('url'))||(enc&&/image/.test(enc.getAttribute('type')||'image')&&enc.getAttribute('url'))||imgIn(g('content:encoded')||g('description'));
+    const img=(f.bing&&g('News:Image')&&g('News:Image')+'&w=300&h=300&c=7')||(mc&&mc.getAttribute('url'))||(enc&&/image/.test(enc.getAttribute('type')||'image')&&enc.getAttribute('url'))||imgIn(g('content:encoded')||g('description'));
     return mkItem(f,g('title'),link,Date.parse(g('pubDate')||g('published')||g('updated')||g('dc:date')),img,f.gn?g('source'):f.bing?g('News:Source'):'',g('content:encoded')||g('content')||g('description')||g('summary'))}).filter(Boolean)}
 async function feedItems(f){
   if(f.kind==='hn'){const j=JSON.parse(await viaProxies('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=20',true));
@@ -863,13 +868,34 @@ function newsRefresh(force){const now=Date.now(),started=[];
   for(const id of newsIds()){if(nload[id])continue;const c=NC[id];if(!force&&c&&(now-c.at<NFRESH||now-(c.tried||0)<60e3))continue;started.push(loadTopic(id))}
   if(started.length)newsPaint();
   if(force)Promise.all(started).then(()=>{if(newsIds().every(i=>NC[i]&&NC[i].at>=now))toast('Notícias atualizadas');else if(newsIds().some(i=>NC[i]&&NC[i].err>=now))toast('Algumas fontes não responderam')})}
-function newsPaint(){if(ui.tab==='news')$('#view').innerHTML=vNews()}
+function newsPaint(){if(ui.tab==='news'){$('#view').innerHTML=vNews();ogObserve()}}
 const relTime=t=>{const m=Math.round((Date.now()-t)/60000);if(m<1)return 'agora';if(m<60)return `há ${m} min`;const h=Math.round(m/60);if(h<24)return `há ${h} h`;const d=ymd(new Date(t));return d===addDays(today(),-1)?'ontem':fmtDay(d)};
 let NVIEW=[];
 function newsItem(x,showTp,i){const tp=showTp&&NT().find(t=>t.id===x.tp);
   return `<button class="item news" data-act="readNews" data-i="${i}"><div class="main"><div class="t">${esc(x.title)}</div>
   <div class="s">${tp?`<span class="ntp">${esc(tp.name)}</span> · `:''}${esc(x.src||'')}${x.src?' · ':''}${relTime(x.at)}</div></div>
-  ${x.img?`<img src="${esc(x.img)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</button>`}
+  ${newsThumb(x)}</button>`}
+const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
+const thumbImg=u=>`<img src="${esc(u)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add('ld')" onerror="this.remove()">`;
+function newsThumb(x){const img=x.img||OG[x.link]||'';const l=(x.src||x.title||'?').replace(/[^\p{L}\p{N}]/gu,'').charAt(0).toUpperCase();
+  return `<div class="nth" style="--h:${hue(x.src||x.tp)}" ${img?'':`data-og="${esc(x.link)}"`}><span>${esc(l)}</span>${img?thumbImg(img):''}</div>`}
+/* imagens das matérias que não vêm no feed: busca a og:image da página quando o item aparece na tela */
+const OGKEY='pulso.og';let OG={};try{OG=JSON.parse(localStorage.getItem(OGKEY)||'{}')||{}}catch(e){OG={}}
+const ogQ=[],ogBusy=new Set();let ogRun=0,ogIO=null;
+function ogSave(){const k=Object.keys(OG);if(k.length>500)for(const x of k.slice(0,k.length-400))delete OG[x];try{localStorage.setItem(OGKEY,JSON.stringify(OG))}catch(e){}}
+function ogFromHtml(html,base){const doc=new DOMParser().parseFromString(html,'text/html');
+  const m=doc.querySelector('meta[property="og:image"],meta[property="og:image:url"],meta[name="og:image"],meta[name="twitter:image"],meta[name="twitter:image:src"],link[rel="image_src"]');
+  let u=m&&(m.getAttribute('content')||m.getAttribute('href'));
+  if(!u)for(const i of doc.querySelectorAll('article img,main img')){const v=imgSrc(i,base);if(v){u=v;break}}
+  return u?absUrl(u,base):''}
+function ogPump(){while(ogRun<3&&ogQ.length){const link=ogQ.shift();if(link in OG||ogBusy.has(link))continue;ogBusy.add(link);ogRun++;
+  viaProxies(link).then(html=>{OG[link]=ogFromHtml(html,link);if(!NART[link]){const a=extractArticle(html,link);if(a)NART[link]=a}})
+  .catch(()=>{OG[link]=''}).finally(()=>{ogRun--;ogBusy.delete(link);ogSave();
+    if(OG[link])document.querySelectorAll('.nth[data-og]').forEach(el=>{if(el.dataset.og===link){el.removeAttribute('data-og');el.insertAdjacentHTML('beforeend',thumbImg(OG[link]))}});
+    ogPump()})}}
+function ogObserve(){if(!('IntersectionObserver' in window))return;if(!ogIO)ogIO=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){ogIO.unobserve(e.target);
+  const l=e.target.dataset.og;if(l&&!(l in OG)&&!/news\.google\.com/.test(l)){ogQ.push(l);ogPump()}}},{rootMargin:'300px'});
+  document.querySelectorAll('.nth[data-og]').forEach(el=>ogIO.observe(el))}
 function vNews(){
   const t=ui.newsTopic,ids=newsIds(),loading=ids.some(i=>nload[i]);
   let items=[];for(const i of ids)if(NC[i])items.push(...NC[i].items.map(x=>({...x,tp:i})));
@@ -1004,7 +1030,7 @@ async function fetchArticle(x){
 let readerOpen=null;
 const rfs=()=>{try{return +localStorage.getItem('pulso.rfs')||18}catch(e){return 18}};
 function readerHtml(x,a){const tp=NT().find(t=>t.id===x.tp);
-  const img=x.img||(a&&a.img)||'';const dupImg=img&&a&&a.html&&a.html.includes(img.split('?')[0]);
+  const img=(a&&a.img)||OG[x.link]||x.img||'';const dupImg=img&&a&&a.html&&a.html.includes(img.split('?')[0]);
   let body;
   if(!a)body=`<div style="display:grid;gap:12px">${[100,96,90,98,60,100,92,80].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div>`;
   else if(a.fail)body=`${x.desc?`<p>${esc(x.desc)}${x.desc.length>=420?'…':''}</p>`:''}<div class="rnote">Este site não deixou o Pulso carregar a matéria completa. Toque em <b>Abrir no site</b> para ler tudo.</div>`;
