@@ -306,6 +306,16 @@ button.item:active,.item.tap:active{background:var(--s2)}
 .rtext blockquote{margin:1.2em 0;padding:2px 0 2px 14px;border-left:3px solid var(--red);color:var(--tx)}
 .rtext ul,.rtext ol{padding-left:1.3em;margin:0 0 1em}
 .rtext li{margin:.3em 0}
+a.btn{color:var(--tx);text-decoration:none}
+.rsbox{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px 16px 6px;margin:0 0 6px}
+.rsh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red2);margin-bottom:10px}
+.rsh svg{width:15px;height:15px}
+.rsum{margin:0 0 8px;padding-left:1.1em;font-size:calc(var(--rfs,18px) - 1px);line-height:1.5;color:var(--tx)}
+.rsum li{margin:0 0 .65em;padding-left:2px}
+.rsum li::marker{color:var(--red2)}
+.rsnote{color:var(--mu);font-size:13px;margin:4px 0 10px}
+.rdiv{margin:26px 0 14px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);display:flex;align-items:center;gap:10px}
+.rdiv::after{content:'';flex:1;height:1px;background:var(--line)}
 .rnote{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--mu);font-size:14px;margin:4px 0 16px}
 .rfoot{margin-top:26px;display:grid;gap:10px}
 @media (min-width:600px){.hero h1{font-size:48px}}
@@ -1029,21 +1039,42 @@ async function fetchArticle(x){
   return NART[x.link]=r||{fail:true}}
 let readerOpen=null;
 const rfs=()=>{try{return +localStorage.getItem('pulso.rfs')||18}catch(e){return 18}};
+/* resumo automático: escolhe as frases mais importantes da matéria (feito no próprio aparelho) */
+const STOP=new Set('a o e é de do da dos das em no na nos nas um uma uns umas para por com sem que se ao aos à às como mais mas ou já foi ser são está estão tem têm ter seu sua seus suas ele ela eles elas isso esse essa este esta nesse nessa neste nesta pelo pela pelos pelas também sobre entre até quando onde muito muita pode podem segundo ainda após antes depois mesmo há era eram foram será vai vão diz disse afirmou não sim só the of and to in for is on that with'.split(' '));
+function summarize(text,n=4){
+  const sents=[];for(const para of text.split(/\n+/)){const p=para.trim();if(p.length<40)continue;
+    for(const t of p.split(/(?<=[.!?…])\s+(?=["“(]?[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9])/)){const v=t.trim();
+      if(v.length>=50&&v.length<=420&&!/^(leia|veja|assista|clique|siga|inscreva|assine|receba|baixe|publicidade|foto:|imagem:|crédito)/i.test(v))sents.push(v)}}
+  if(sents.length<=n)return sents;
+  const words=v=>v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').match(/[a-z0-9]{3,}/g)||[];
+  const freq={};for(const v of sents)for(const w of new Set(words(v)))if(!STOP.has(w))freq[w]=(freq[w]||0)+1;
+  const scored=sents.map((v,i)=>{const ws=words(v).filter(w=>!STOP.has(w));let sc=0;for(const w of ws)sc+=freq[w]>1?Math.log(1+freq[w]):0;
+    sc=ws.length?sc/Math.sqrt(ws.length):0;if(i===0)sc*=1.6;else if(i<3)sc*=1.25;if(/\d/.test(v))sc*=1.1;return {v,i,sc}});
+  return scored.sort((a,b)=>b.sc-a.sc).slice(0,n).sort((a,b)=>a.i-b.i).map(x=>x.v)}
+function articleText(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('figure,figcaption,img').forEach(e=>e.remove());
+  return [...d.querySelectorAll('p,li,blockquote')].map(e=>e.textContent.trim()).filter(Boolean).join('\n')||d.textContent}
+let readerFull=false;
 function readerHtml(x,a){const tp=NT().find(t=>t.id===x.tp);
-  const img=(a&&a.img)||OG[x.link]||x.img||'';const dupImg=img&&a&&a.html&&a.html.includes(img.split('?')[0]);
-  let body;
-  if(!a)body=`<div style="display:grid;gap:12px">${[100,96,90,98,60,100,92,80].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div>`;
-  else if(a.fail)body=`${x.desc?`<p>${esc(x.desc)}${x.desc.length>=420?'…':''}</p>`:''}<div class="rnote">Este site não deixou o Pulso carregar a matéria completa. Toque em <b>Abrir no site</b> para ler tudo.</div>`;
-  else body=a.html;
+  const img=(a&&a.img)||OG[x.link]||x.img||'';const dupImg=readerFull&&img&&a&&a.html&&a.html.includes(img.split('?')[0]);
+  let sum='',full='';
+  if(!a)sum=`<div style="display:grid;gap:10px">${[100,94,98,70].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div><p class="rsnote">Lendo a matéria para resumir…</p>`;
+  else{const pts=a.fail?(x.desc?summarize(x.desc,3):[]):(a.sum||(a.sum=summarize(articleText(a.html))));
+    sum=pts.length?`<ul class="rsum">${pts.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:`<p class="rsnote">Não foi possível gerar um resumo desta matéria.</p>`;
+    if(a.fail)sum+=`<p class="rsnote">Este site não deixou o Pulso carregar a matéria completa; o resumo usa só a chamada da notícia.</p>`;
+    else if(readerFull)full=`<div class="rtext" id="rfull" style="--rfs:${rfs()}px">${a.html}</div>`}
+  const canFull=a&&!a.fail;
   return `<div class="rbar"><button class="back" data-act="closeReader">${I('left')}Notícias</button>
     <button class="icon-btn" data-act="readerFont" aria-label="Tamanho do texto">Aa</button>
     ${navigator.share?`<button class="icon-btn" data-act="shareNews" aria-label="Compartilhar">${I('share')}</button>`:''}</div>
   <article class="rbody"><div class="rmeta">${tp?`<span class="ntp">${esc(tp.name)}</span>· `:''}${esc(x.src||'')}${x.src?' · ':''}${relTime(x.at)}</div>
     <h1>${esc(x.title)}</h1>${img&&!dupImg?`<img class="rhero" src="${esc(img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:''}
-    <div class="rtext" style="--rfs:${rfs()}px">${body}</div>
-    <div class="rfoot"><a class="btn ${a&&a.fail?'primary':''}" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">Abrir no site${x.src?' · '+esc(x.src):''}</a>
+    <section class="rsbox" style="--rfs:${rfs()}px"><div class="rsh">${I('spark')}Resumo</div>${sum}</section>
+    ${full?`<div class="rdiv">Matéria completa</div>${full}`:''}
+    <div class="rfoot">${canFull&&!readerFull?`<button class="btn primary" data-act="readFull">Ler matéria completa aqui</button>`:''}
+    ${!a&&!readerFull?`<button class="btn" disabled style="opacity:.5">Carregando matéria…</button>`:''}
+    <a class="btn ${a&&a.fail?'primary':''}" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">Abrir no site${x.src?' · '+esc(x.src):''}</a>
     <button class="btn ghost" data-act="closeReader">Voltar às notícias</button></div></article>`}
-function openReader(x){readerOpen=x;const R=$('#reader');R.innerHTML=readerHtml(x,NART[x.link]);R.classList.add('on');R.scrollTop=0;document.body.classList.add('noscroll');
+function openReader(x){readerOpen=x;readerFull=false;const R=$('#reader');R.innerHTML=readerHtml(x,NART[x.link]);R.classList.add('on');R.scrollTop=0;document.body.classList.add('noscroll');
   try{history.pushState({reader:1},'')}catch(e){}
   if(!NART[x.link])fetchArticle(x).then(a=>{if(readerOpen===x){const y=R.scrollTop;R.innerHTML=readerHtml(x,a);R.scrollTop=y}})}
 function closeReader(fromPop){if(!readerOpen)return;readerOpen=null;const R=$('#reader');R.classList.remove('on');R.innerHTML='';if(!$('#layer').classList.contains('on'))document.body.classList.remove('noscroll');
@@ -1064,7 +1095,8 @@ const A={
   restoreTopics(){const list=NT();setNT([...NEWS_BUILTIN.filter(b=>!list.some(t=>t.id===b.id)),...list]);haptic();topicsSheet();newsPaint();newsRefresh(false);toast('Temas padrão restaurados')},
   readNews(d){const x=NVIEW[+d.i];if(x){haptic();openReader(x)}},
   closeReader(){closeReader()},
-  readerFont(){const n=[16,18,20,22],v=n[(n.indexOf(rfs())+1)%n.length];try{localStorage.setItem('pulso.rfs',v)}catch(e){}const t=$('#reader .rtext');if(t)t.style.setProperty('--rfs',v+'px');haptic()},
+  readFull(){if(!readerOpen)return;haptic();readerFull=true;const R=$('#reader');R.innerHTML=readerHtml(readerOpen,NART[readerOpen.link]);const f=$('#reader .rdiv');if(f)R.scrollTo({top:f.offsetTop-70,behavior:'smooth'})},
+  readerFont(){const n=[16,18,20,22],v=n[(n.indexOf(rfs())+1)%n.length];try{localStorage.setItem('pulso.rfs',v)}catch(e){}document.querySelectorAll('#reader .rtext,#reader .rsbox').forEach(t=>t.style.setProperty('--rfs',v+'px'));haptic()},
   shareNews(){const x=readerOpen;if(x)navigator.share({title:x.title,url:x.link}).catch(()=>{})},
   toggleHide(){S.settings.hide=!S.settings.hide;haptic();save();render()},
   addMenu(){haptic();if(!FIN_ON){eventForm(null,{});return}sheet('Adicionar',`<div class="list" style="background:var(--s2)">
