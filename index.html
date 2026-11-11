@@ -25,6 +25,7 @@
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button,a,label,input,select{touch-action:manipulation}
 html,body{background:var(--bg);color:var(--tx)}
 body{margin:0;font:15px/1.4 var(--font);min-height:100%;overscroll-behavior-y:none;-webkit-font-smoothing:antialiased}
 body.noscroll{overflow:hidden}
@@ -37,8 +38,7 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke
 
 /* header */
 .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(7,7,8,.82);
-  -webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);border-bottom:1px solid transparent}
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:rgba(7,7,8,.97);border-bottom:1px solid transparent}
 .top.scrolled{border-bottom-color:var(--line)}
 .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-.01em}
 .brand svg{color:var(--red);width:24px;height:24px}
@@ -48,8 +48,7 @@ main{padding:6px 16px calc(var(--tabh) + 96px + env(safe-area-inset-bottom,0px))
 
 /* tabs */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
-  padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 4px);background:rgba(10,10,12,.88);
-  -webkit-backdrop-filter:saturate(160%) blur(20px);backdrop-filter:saturate(160%) blur(20px);border-top:1px solid var(--line)}
+  padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 4px);background:rgba(10,10,12,.97);border-top:1px solid var(--line)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--mu2);font-size:10.5px;font-weight:600;letter-spacing:.01em;position:relative}
 .tab.on{color:var(--tx)}
 .tab.on svg{color:var(--red)}
@@ -178,7 +177,7 @@ button.item:active,.item.tap:active{background:var(--s2)}
 /* sheet */
 #layer{position:fixed;inset:0;z-index:50;display:none}
 #layer.on{display:block}
-.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:fade .2s ease}
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.66);animation:fade .2s ease}
 .sheet{position:absolute;left:0;right:0;bottom:0;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--s1);border-radius:24px 24px 0 0;
   padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 20px);animation:up .28s cubic-bezier(.2,.9,.3,1);max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .grab{width:38px;height:5px;border-radius:3px;background:var(--s3);margin:0 auto 2px;flex:none}
@@ -215,7 +214,7 @@ button.item:active,.item.tap:active{background:var(--s2)}
 
 /* modal & popup */
 .modal{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:24px}
-.modal .back{position:absolute;inset:0;background:rgba(0,0,0,.65);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fade .2s}
+.modal .back{position:absolute;inset:0;background:rgba(0,0,0,.72);animation:fade .2s}
 .modal .box{position:relative;width:100%;max-width:360px;background:var(--s1);border-radius:22px;padding:22px 18px 16px;text-align:center;animation:pop .28s cubic-bezier(.2,1.2,.4,1)}
 .modal .box h3{margin:6px 0 4px;font-size:20px;letter-spacing:-.02em}
 .modal .box p{margin:0 0 16px;color:var(--mu)}
@@ -253,7 +252,7 @@ button.item:active,.item.tap:active{background:var(--s2)}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* news */
-.item.news{align-items:flex-start;gap:12px;color:inherit;text-decoration:none}
+.item.news{align-items:flex-start;gap:12px;color:inherit;text-decoration:none;content-visibility:auto;contain-intrinsic-size:auto 112px}
 
 .item.news .t{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.3;font-size:15px}
 .item.news .s{margin-top:5px;white-space:normal}
@@ -287,7 +286,7 @@ button.item:active,.item.tap:active{background:var(--s2)}
 #reader{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:none}
 #reader.on{display:block;animation:rin .22s ease-out}
 @keyframes rin{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
-.rbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:rgba(7,7,8,.86);-webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);border-bottom:1px solid var(--line)}
+.rbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;background:rgba(7,7,8,.97);border-bottom:1px solid var(--line)}
 .rbar .back{display:flex;align-items:center;gap:2px;font-weight:600;color:var(--red2);font-size:16px;padding:8px 6px;margin-right:auto}
 .rbar .back svg{width:22px;height:22px}
 .rbar .icon-btn{font-weight:800;font-size:15px}
@@ -492,8 +491,10 @@ function check(){
   S.lastCheck=now;
   for(const x of items)S.fired[x.key]=x.at;
   S.snoozes=S.snoozes.filter(s=>s.at>now);
-  for(const k in S.fired)if(S.fired[k]<now-4*864e5)delete S.fired[k];
-  save();
+  let ch=items.length>0,nS=S.snoozes.length;
+  for(const k in S.fired)if(S.fired[k]<now-4*864e5){delete S.fired[k];ch=true}
+  // salvar a cada 20 s travava a interface; só grava quando algo mudou (ou a cada 2 min para guardar o horário da última checagem)
+  if(ch||nS!==check.nS||now-(check.at||0)>120e3){check.at=now;save()}check.nS=nS;
   if(!items.length)return;
   for(const x of items){
     const late=now-x.at>5*60000;
@@ -548,7 +549,7 @@ function render(){
   $('#topTitle').textContent=ui.tab==='home'?'Pulso':TABS.find(t=>t[0]===ui.tab)[1];
   $('.fab').style.display=ui.tab==='news'?'none':'';
   setTimeout(()=>ui.tab==='news'&&ogObserve());
-  $('#view').innerHTML=({home:vHome,agenda:vAgenda,fin:vFin,debts:vDebts,news:vNews,more:vMore})[ui.tab]();
+  $('#view').innerHTML=({home:vHome,agenda:vAgenda,fin:vFin,debts:vDebts,news:vNews,more:vMore})[ui.tab]();$('#view')._np=null;
 }
 function evItem(e,d){return `<button class="item" data-act="editEvent" data-id="${e.id}"><div class="time num">${e.time||'Dia'}<small>${e.time?'':'todo'}</small></div><div class="bar"></div>
   <div class="main"><div class="t">${esc(e.title)}</div><div class="s">${[e.location,e.repeat!=='none'?({daily:'Todo dia',weekly:'Toda semana',monthly:'Todo mês',yearly:'Todo ano'})[e.repeat]:'',d&&d!==today()?relDay(d):''].filter(Boolean).map(esc).join(' · ')||'Compromisso'}</div></div></button>`}
@@ -834,11 +835,26 @@ function NT(){const l=S.settings.ntopics;if(!Array.isArray(l))return NEWS_BUILTI
 function setNT(list){S.settings.ntopics=list.map(t=>t.custom?{id:t.id,name:t.name,q:t.q}:{id:t.id});save()}
 const NKEY='pulso.news',NFRESH=20*60e3;
 let NC={};try{NC=JSON.parse(localStorage.getItem(NKEY)||'{}')||{}}catch(e){NC={}}
-const nsave=()=>{try{localStorage.setItem(NKEY,JSON.stringify(NC))}catch(e){}};
+let nsT;const nsave=()=>{clearTimeout(nsT);nsT=setTimeout(()=>{try{localStorage.setItem(NKEY,JSON.stringify(NC))}catch(e){}},500)};
 const nload={};
-const PROXIES=[u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`];
-async function getText(url,ms=9000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return await r.text()}finally{clearTimeout(t)}}
-async function viaProxies(url,direct){let err;for(const u of (direct?[url]:[]).concat(PROXIES.map(p=>p(url)))){try{const t=await getText(u);if(t&&t.length>40)return t}catch(e){err=e}}throw err||new Error('sem resposta')}
+// cada proxy devolve a URL (texto) ou [URL, cabeçalhos]. r.jina.ai com X-Respond-With: html devolve o conteúdo bruto e costuma ser o mais rápido.
+const PROXIES=[u=>[`https://r.jina.ai/${u}`,{'X-Respond-With':'html'}],u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,u=>`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`];
+async function getText(url,ms=9000,ctl){let headers;if(Array.isArray(url))[url,headers]=url;const c=ctl||new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal,cache:'no-store',headers});if(!r.ok)throw new Error('HTTP '+r.status);return await r.text()}finally{clearTimeout(t)}}
+/* Proxies em paralelo escalonado: dispara o mais rápido conhecido; se não responder em HEDGE ms (ou falhar), dispara o próximo
+   sem cancelar o anterior. Vence a primeira resposta válida; as outras são abortadas. O vencedor vira o primeiro da fila. */
+const HEDGE=1200,PXK='pulso.px';
+let PXORD=PROXIES.map((_,i)=>i);try{const o=JSON.parse(localStorage.getItem(PXK));if(Array.isArray(o)&&o.length===PROXIES.length&&o.every(i=>PROXIES[i]))PXORD=o}catch(e){}
+function pxWin(i){if(PXORD[0]===i)return;PXORD=[i,...PXORD.filter(x=>x!==i)];try{localStorage.setItem(PXK,JSON.stringify(PXORD))}catch(e){}}
+function viaProxies(url,direct){
+  const cands=(direct?[[-1,url]]:[]).concat(PXORD.map(i=>[i,PROXIES[i](url)]));
+  return new Promise((res,rej)=>{let next=0,pending=0,done=false,err,timer;const ctls=[];
+    const launch=()=>{clearTimeout(timer);if(done||next>=cands.length)return;const[i,u]=cands[next++],c=new AbortController();ctls.push(c);pending++;
+      getText(u,8000,c).then(t=>{if(done)return;if(!(t&&t.length>40))throw new Error('vazio');done=true;clearTimeout(timer);for(const x of ctls)if(x!==c)x.abort();if(i>=0)pxWin(i);res(t)})
+        .catch(e=>{if(done)return;err=e;pending--;if(next<cands.length)launch();else if(!pending)rej(err||new Error('sem resposta'))});
+      if(next<cands.length)timer=setTimeout(launch,HEDGE)};
+    launch()})}
+const firstOk=ps=>new Promise((res,rej)=>{let n=ps.length,err;for(const p of ps)p.then(v=>{if(v&&v.length)res(v);else if(!--n)rej(err||new Error('vazio'))},e=>{err=e;if(!--n)rej(e)})});
+const idle=()=>new Promise(r=>window.requestIdleCallback?requestIdleCallback(()=>r(),{timeout:300}):setTimeout(r,16));
 const decEl=document.createElement('textarea');
 const clean=s=>{decEl.innerHTML=String(s||'').replace(/<[^>]*>/g,' ');return decEl.value.replace(/\s+/g,' ').trim()};
 const imgIn=h=>{const m=/<img[^>]+src=["']([^"']+)["']/i.exec(h||'');return m?m[1]:''};
@@ -862,23 +878,31 @@ async function feedItems(f){
     return j.filter(x=>!x.parent_id).map(x=>mkItem(f,x.title,`https://www.tabnews.com.br/${x.owner_username}/${x.slug}`,Date.parse(x.published_at),'','TabNews')).filter(Boolean)}
   if(f.kind==='search'){let r=[];try{r=parseFeed(await viaProxies(BING(f.q)),{bing:1})}catch(e){}
     if(r.length<4){try{r=r.concat(await feedItems({url:GN(f.q),gn:1}))}catch(e){if(!r.length)throw e}}return r}
-  try{const j=JSON.parse(await getText('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url)));
-    if(j.status==='ok'&&j.items&&j.items.length)return j.items.map(x=>mkItem(f,x.title,x.link,Date.parse(String(x.pubDate||'').replace(' ','T')+'Z'),
-      x.thumbnail||(x.enclosure&&/image/.test(x.enclosure.type||'')&&x.enclosure.link)||imgIn(x.content||x.description),'',(x.content&&x.content.length>(x.description||'').length?x.content:x.description))).filter(Boolean)}catch(e){}
-  return parseFeed(await viaProxies(f.url),f)}
+  // rss2json e o feed bruto via proxy correm juntos: usa o que chegar primeiro com itens
+  const r2j=getText('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(f.url),7000).then(t=>{const j=JSON.parse(t);if(j.status!=='ok'||!j.items)return [];
+    return j.items.map(x=>mkItem(f,x.title,x.link,Date.parse(String(x.pubDate||'').replace(' ','T')+'Z'),
+      x.thumbnail||(x.enclosure&&/image/.test(x.enclosure.type||'')&&x.enclosure.link)||imgIn(x.content||x.description),'',(x.content&&x.content.length>(x.description||'').length?x.content:x.description))).filter(Boolean)});
+  return firstOk([r2j,viaProxies(f.url).then(x=>parseFeed(x,f))])}
 const nkey=t=>t.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'').slice(0,60);
 function dedupe(list){const seen=new Set();return list.filter(x=>{const k=nkey(x.title);if(seen.has(k)||seen.has(x.link))return false;seen.add(k);seen.add(x.link);return true})}
+/* cada fonte entra na lista assim que responde (não espera a mais lenta); as matérias antigas ficam visíveis enquanto isso */
 function loadTopic(id){
-  const T=NT().find(t=>t.id===id);NC[id]={items:[],at:0,...NC[id],tried:Date.now()};
-  return nload[id]=Promise.allSettled(T.feeds.map(feedItems)).then(rs=>{const all=[];for(const r of rs)if(r.status==='fulfilled')all.push(...r.value);
-    if(all.length){NC[id]={items:dedupe(all.sort((a,b)=>b.at-a.at)).slice(0,40),at:Date.now(),tried:Date.now()}}else NC[id].err=Date.now();nsave()})
-    .finally(()=>{delete nload[id];newsPaint()})}
+  const T=NT().find(t=>t.id===id);if(!T)return Promise.resolve();
+  const prev=(NC[id]&&NC[id].items)||[];NC[id]={items:prev,at:0,...NC[id],tried:Date.now()};const got=[];
+  const byDate=(a,b)=>b.at-a.at;
+  return nload[id]=Promise.allSettled(T.feeds.map(f=>feedItems(f).then(r=>{got.push(...r);NC[id].items=dedupe([...got,...prev].sort(byDate)).slice(0,40);newsPaintSoon()})))
+    .then(()=>{if(got.length){NC[id]={items:dedupe(got.sort(byDate)).slice(0,40),at:Date.now(),tried:Date.now()}}else{NC[id].items=prev;NC[id].err=Date.now()}nsave()})
+    .finally(()=>{delete nload[id];newsPaintSoon()})}
 const newsIds=()=>{const t=ui.newsTopic;return t==='all'?NT().map(x=>x.id):[t]};
 function newsRefresh(force){const now=Date.now(),started=[];
   for(const id of newsIds()){if(nload[id])continue;const c=NC[id];if(!force&&c&&(now-c.at<NFRESH||now-(c.tried||0)<60e3))continue;started.push(loadTopic(id))}
-  if(started.length)newsPaint();
+  if(started.length)newsPaintSoon();
   if(force)Promise.all(started).then(()=>{if(newsIds().every(i=>NC[i]&&NC[i].at>=now))toast('Notícias atualizadas');else if(newsIds().some(i=>NC[i]&&NC[i].err>=now))toast('Algumas fontes não responderam')})}
-function newsPaint(){if(ui.tab==='news'){$('#view').innerHTML=vNews();ogObserve()}}
+// repinta no máximo 1x por quadro, e só se algo mudou (evita recarregar a lista e as imagens à toa)
+let npRaf=0;
+function newsPaintSoon(){if(npRaf)return;const go=()=>{if(!npRaf)return;cancelAnimationFrame(npRaf.a);clearTimeout(npRaf.t);npRaf=0;newsPaint()};
+  npRaf={a:requestAnimationFrame(go),t:setTimeout(go,150)}}// timer cobre o caso de quadros pausados (app em segundo plano)
+function newsPaint(){if(ui.tab!=='news')return;const v=$('#view'),html=vNews();if(v._np===html)return;v.innerHTML=html;v._np=html;ogObserve()}
 const relTime=t=>{const m=Math.round((Date.now()-t)/60000);if(m<1)return 'agora';if(m<60)return `há ${m} min`;const h=Math.round(m/60);if(h<24)return `há ${h} h`;const d=ymd(new Date(t));return d===addDays(today(),-1)?'ontem':fmtDay(d)};
 let NVIEW=[];
 function newsItem(x,showTp,i){const tp=showTp&&NT().find(t=>t.id===x.tp);
@@ -886,26 +910,39 @@ function newsItem(x,showTp,i){const tp=showTp&&NT().find(t=>t.id===x.tp);
   <div class="s">${tp?`<span class="ntp">${esc(tp.name)}</span> · `:''}${esc(x.src||'')}${x.src?' · ':''}${relTime(x.at)}</div></div>
   ${newsThumb(x)}</button>`}
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
-const thumbImg=u=>`<img src="${esc(u)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add('ld')" onerror="this.remove()">`;
+// imagens que já carregaram uma vez aparecem direto (sem fade de novo a cada atualização da lista)
+const IMGOK=new Set();
+const thumbImg=u=>IMGOK.has(u)?`<img class="ld" src="${esc(u)}" alt="" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`
+  :`<img src="${esc(u)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add('ld');IMGOK.add(this.getAttribute('src'))" onerror="this.remove()">`;
 function newsThumb(x){const img=x.img||OG[x.link]||'';const l=(x.src||x.title||'?').replace(/[^\p{L}\p{N}]/gu,'').charAt(0).toUpperCase();
   return `<div class="nth" style="--h:${hue(x.src||x.tp)}" ${img?'':`data-og="${esc(x.link)}"`}><span>${esc(l)}</span>${img?thumbImg(img):''}</div>`}
 /* imagens das matérias que não vêm no feed: busca a og:image da página quando o item aparece na tela */
 const OGKEY='pulso.og';let OG={};try{OG=JSON.parse(localStorage.getItem(OGKEY)||'{}')||{}}catch(e){OG={}}
 const ogQ=[],ogBusy=new Set();let ogRun=0,ogIO=null;
-function ogSave(){const k=Object.keys(OG);if(k.length>500)for(const x of k.slice(0,k.length-400))delete OG[x];try{localStorage.setItem(OGKEY,JSON.stringify(OG))}catch(e){}}
-function ogFromHtml(html,base){const doc=new DOMParser().parseFromString(html,'text/html');
+let ogT;function ogSave(){clearTimeout(ogT);ogT=setTimeout(()=>{const k=Object.keys(OG);if(k.length>500)for(const x of k.slice(0,k.length-400))delete OG[x];try{localStorage.setItem(OGKEY,JSON.stringify(OG))}catch(e){}},800)}
+function ogFromDoc(doc,base){
   const m=doc.querySelector('meta[property="og:image"],meta[property="og:image:url"],meta[name="og:image"],meta[name="twitter:image"],meta[name="twitter:image:src"],link[rel="image_src"]');
   let u=m&&(m.getAttribute('content')||m.getAttribute('href'));
   if(!u)for(const i of doc.querySelectorAll('article img,main img')){const v=imgSrc(i,base);if(v){u=v;break}}
   return u?absUrl(u,base):''}
-function ogPump(){while(ogRun<3&&ogQ.length){const link=ogQ.shift();if(link in OG||ogBusy.has(link))continue;ogBusy.add(link);ogRun++;
-  viaProxies(link).then(html=>{OG[link]=ogFromHtml(html,link);if(!NART[link]){const a=extractArticle(html,link);if(a)NART[link]=a}})
-  .catch(()=>{OG[link]=''}).finally(()=>{ogRun--;ogBusy.delete(link);ogSave();
-    if(OG[link])document.querySelectorAll('.nth[data-og]').forEach(el=>{if(el.dataset.og===link){el.removeAttribute('data-og');el.insertAdjacentHTML('beforeend',thumbImg(OG[link]))}});
-    ogPump()})}}
-function ogObserve(){if(!('IntersectionObserver' in window))return;if(!ogIO)ogIO=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){ogIO.unobserve(e.target);
-  const l=e.target.dataset.og;if(l&&!(l in OG)&&!/news\.google\.com/.test(l)){ogQ.push(l);ogPump()}}},{rootMargin:'300px'});
-  document.querySelectorAll('.nth[data-og]').forEach(el=>ogIO.observe(el))}
+function paintThumb(link){if(!OG[link])return;document.querySelectorAll('.nth[data-og]').forEach(el=>{if(el.dataset.og===link){el.removeAttribute('data-og');el.insertAdjacentHTML('beforeend',thumbImg(OG[link]))}})}
+/* pré-carrega a matéria (e a imagem) de cada notícia que aparece na tela, 3 por vez.
+   Assim, ao tocar, o resumo já está pronto. Notícias que saem da tela antes da vez saem da fila. */
+const isGN=l=>/news\.google\.com/.test(l);
+function ogPump(){while(ogRun<3&&ogQ.length){const x=ogQ.shift();if(NART[x.link]||NPROM[x.link])continue;ogRun++;
+  fetchArticle(x).finally(()=>{ogRun--;ogPump()})}}
+function ogObserve(){if(!('IntersectionObserver' in window))return;
+  if(ogIO)ogIO.disconnect();
+  ogIO=new IntersectionObserver(es=>{for(const e of es){const x=NVIEW[+e.target.dataset.i];if(!x)continue;const k=ogQ.findIndex(y=>y.link===x.link);
+    if(e.isIntersecting){if(k<0&&!NART[x.link]&&!NPROM[x.link]&&!isGN(x.link))ogQ.push(x)}
+    else if(k>=0)ogQ.splice(k,1)}
+    ogPump()},{rootMargin:'150px'});
+  document.querySelectorAll('#view .item.news').forEach(el=>ogIO.observe(el));
+  // as primeiras da lista entram na fila direto (estão no topo da tela de qualquer jeito)
+  for(const x of NVIEW.slice(0,6))if(!NART[x.link]&&!NPROM[x.link]&&!isGN(x.link)&&!ogQ.some(y=>y.link===x.link))ogQ.push(x);
+  ogPump()}
+// toque começa a baixar a matéria antes do clique terminar (~100-300 ms de vantagem)
+document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('[data-act="readNews"]');const x=el&&NVIEW[+el.dataset.i];if(x&&!isGN(x.link))fetchArticle(x)},{passive:true});
 function vNews(){
   const t=ui.newsTopic,ids=newsIds(),loading=ids.some(i=>nload[i]);
   let items=[];for(const i of ids)if(NC[i])items.push(...NC[i].items.map(x=>({...x,tp:i})));
@@ -1019,8 +1056,7 @@ function pickMain(doc){
 function ldBody(doc){for(const sc of doc.querySelectorAll('script[type="application/ld+json"]')){try{const stack=[JSON.parse(sc.textContent)];while(stack.length){const o=stack.pop();if(!o||typeof o!=='object')continue;
   if(typeof o.articleBody==='string'&&o.articleBody.length>500)return o.articleBody;for(const v of Object.values(o))if(v&&typeof v==='object')stack.push(v)}}catch(e){}}return ''}
 function textToHtml(t){return clean(t).split(/(?<=[.!?…"”])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ“"])/).reduce((a,s)=>{const l=a[a.length-1];if(l&&l.length<320)a[a.length-1]=l+' '+s;else a.push(s);return a},[]).map(p=>`<p>${esc(p)}</p>`).join('')}
-function extractArticle(html,base){
-  const doc=new DOMParser().parseFromString(html,'text/html');
+function extractArticle(doc,base){
   const og=(doc.querySelector('meta[property="og:image"],meta[name="twitter:image"]')||{}).content||'';
   const ld=ldBody(doc);
   doc.querySelectorAll(JUNK).forEach(e=>e.remove());
@@ -1030,13 +1066,21 @@ function extractArticle(html,base){
     len=frag.textContent.replace(/\s+/g,' ').length;out=frag.innerHTML}
   if(ld&&ld.length>len*1.3){out=textToHtml(ld);len=ld.length}
   return len>400?{html:out,img:absUrl(og,base)}:null}
-async function fetchArticle(x){
-  if(NART[x.link])return NART[x.link];
-  let r=null;
-  if(NFULL[x.link]){const doc=new DOMParser().parseFromString(NFULL[x.link],'text/html');
-    const frag=sanitize(doc.body,x.link,document.createElement('div'));if(frag.textContent.trim().length>800)r={html:frag.innerHTML,img:''}}
-  if(!r&&!/news\.google\.com/.test(x.link)){try{r=extractArticle(await viaProxies(x.link),x.link)}catch(e){}}
-  return NART[x.link]=r||{fail:true}}
+/* resumos prontos ficam guardados no aparelho: reabrir uma notícia mostra o resumo na hora, mesmo depois de fechar o app */
+const SKEY='pulso.sum';let SUMS={};try{SUMS=JSON.parse(localStorage.getItem(SKEY)||'{}')||{}}catch(e){SUMS={}}
+let sumT;function sumSave(){clearTimeout(sumT);sumT=setTimeout(()=>{const k=Object.keys(SUMS);if(k.length>300)for(const x of k.slice(0,k.length-250))delete SUMS[x];try{localStorage.setItem(SKEY,JSON.stringify(SUMS))}catch(e){}},800)}
+const NPROM={};// downloads em andamento (o mesmo link nunca é baixado duas vezes ao mesmo tempo)
+function fetchArticle(x){const l=x.link;
+  if(NART[l])return Promise.resolve(NART[l]);if(NPROM[l])return NPROM[l];
+  return NPROM[l]=(async()=>{let r=null;
+    if(NFULL[l]){await idle();const doc=new DOMParser().parseFromString(NFULL[l],'text/html');
+      const frag=sanitize(doc.body,l,document.createElement('div'));if(frag.textContent.trim().length>800)r={html:frag.innerHTML,img:''}}
+    if(!r&&!isGN(l)){try{const html=await viaProxies(l);await idle();// processa quando o aparelho estiver livre, sem travar a rolagem
+      const doc=new DOMParser().parseFromString(html,'text/html');
+      if(!OG[l]){OG[l]=ogFromDoc(doc,l);ogSave();paintThumb(l)}
+      r=extractArticle(doc,l)}catch(e){if(!(l in OG)){OG[l]='';ogSave()}}}
+    if(r){r.sum=summarize(articleText(r.html));if(r.sum.length){SUMS[l]=r.sum;sumSave()}}
+    NART[l]=r||{fail:true};delete NPROM[l];return NART[l]})()}
 let readerOpen=null;
 const rfs=()=>{try{return +localStorage.getItem('pulso.rfs')||18}catch(e){return 18}};
 /* resumo automático: escolhe as frases mais importantes da matéria (feito no próprio aparelho) */
@@ -1057,7 +1101,9 @@ let readerFull=false;
 function readerHtml(x,a){const tp=NT().find(t=>t.id===x.tp);
   const img=(a&&a.img)||OG[x.link]||x.img||'';const dupImg=readerFull&&img&&a&&a.html&&a.html.includes(img.split('?')[0]);
   let sum='',full='';
-  if(!a)sum=`<div style="display:grid;gap:10px">${[100,94,98,70].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div><p class="rsnote">Lendo a matéria para resumir…</p>`;
+  const pre=!a&&(SUMS[x.link]||(x.desc&&x.desc.length>=140&&summarize(x.desc,3)));
+  if(!a&&pre&&pre.length)sum=`<ul class="rsum">${pre.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>${SUMS[x.link]?'':'<p class="rsnote">Resumo da chamada · lendo a matéria completa…</p>'}`;
+  else if(!a)sum=`<div style="display:grid;gap:10px">${[100,94,98,70].map(w=>`<div class="skel" style="width:${w}%"></div>`).join('')}</div><p class="rsnote">Lendo a matéria para resumir…</p>`;
   else{const pts=a.fail?(x.desc?summarize(x.desc,3):[]):(a.sum||(a.sum=summarize(articleText(a.html))));
     sum=pts.length?`<ul class="rsum">${pts.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:`<p class="rsnote">Não foi possível gerar um resumo desta matéria.</p>`;
     if(a.fail)sum+=`<p class="rsnote">Este site não deixou o Pulso carregar a matéria completa; o resumo usa só a chamada da notícia.</p>`;
@@ -1076,7 +1122,7 @@ function readerHtml(x,a){const tp=NT().find(t=>t.id===x.tp);
     <button class="btn ghost" data-act="closeReader">Voltar às notícias</button></div></article>`}
 function openReader(x){readerOpen=x;readerFull=false;const R=$('#reader');R.innerHTML=readerHtml(x,NART[x.link]);R.classList.add('on');R.scrollTop=0;document.body.classList.add('noscroll');
   try{history.pushState({reader:1},'')}catch(e){}
-  if(!NART[x.link])fetchArticle(x).then(a=>{if(readerOpen===x){const y=R.scrollTop;R.innerHTML=readerHtml(x,a);R.scrollTop=y}})}
+  if(!NART[x.link])fetchArticle(x).then(a=>{if(readerOpen!==x)return;const y=R.scrollTop;R.innerHTML=readerHtml(x,a);R.scrollTop=y})}
 function closeReader(fromPop){if(!readerOpen)return;readerOpen=null;const R=$('#reader');R.classList.remove('on');R.innerHTML='';if(!$('#layer').classList.contains('on'))document.body.classList.remove('noscroll');
   if(!fromPop&&history.state&&history.state.reader)try{history.back()}catch(e){}}
 addEventListener('popstate',()=>{if(readerOpen)closeReader(true)});
@@ -1184,11 +1230,14 @@ document.addEventListener('submit',e=>{if(e.target.id!=='qa')return;e.preventDef
   const r=quickParse(v);$('#qaIn').value='';if(r.kind==='tx')txForm(null,{type:r.type,amount:r.amount,desc:r.desc,cat:r.cat});else eventForm(null,{title:r.title,date:r.date,time:r.time})});
 $('#importFile').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d||!d.v||!Array.isArray(d.events))throw 0;
   confirmBox('Restaurar backup?',`Isso substitui os dados atuais por ${d.events.length} compromissos, ${d.tx.length} lançamentos e ${d.debts.length} dívidas.`,'Restaurar',()=>{S=d;S.lastCheck=Date.now();normalize();save();render();toast('Backup restaurado')})}catch(err){toast('Esse arquivo não é um backup do Pulso')}};rd.readAsText(file)});
-addEventListener('scroll',()=>$('#top').classList.toggle('scrolled',scrollY>4),{passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false)}});
+{let sc=false;const top=$('#top');addEventListener('scroll',()=>{const v=scrollY>4;if(v!==sc){sc=v;top.classList.toggle('scrolled',v)}},{passive:true})}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now()}else{if(S.settings.pinHash&&!locked&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();check();render();showPopup();if(ui.tab==='news')newsRefresh(false);else setTimeout(newsWarm,1500);if(ui.tab==='home')marketRefresh(false)}});
 
 /* ---------- boot ---------- */
 load();save();if(!NT().some(t=>t.id===ui.newsTopic))ui.newsTopic='all';render();if(ui.tab==='news')newsRefresh(false);if(ui.tab==='home')marketRefresh(false);
+// notícias já vêm sendo buscadas em segundo plano: ao abrir a aba, a lista está pronta
+const newsWarm=()=>{if(navigator.onLine!==false&&ui.tab!=='news'&&!document.hidden)idle().then(()=>newsRefresh(false))};
+setTimeout(newsWarm,2500);
 if(S.settings.pinHash)showLock();
 check();setInterval(check,20000);
 setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home'&&document.activeElement!==$('#qaIn'))render()},60000);
