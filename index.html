@@ -978,7 +978,7 @@ function addTopic(q){q=q.replace(/\s+/g,' ').trim();if(!q)return false;const lis
 const FX=[['USD','Dólar'],['EUR','Euro']];
 const STOCKS=[['PETR4','Petrobras'],['VALE3','Vale'],['ITUB4','Itaú'],['BBAS3','Banco do Brasil'],['BBDC4','Bradesco'],['WEGE3','WEG'],['ABEV3','Ambev'],['B3SA3','B3']];
 const IDX=['^BVSP','Ibovespa'];
-const MKEY='pulso.mkt',MFRESH=5*60e3;
+const MKEY='pulso.mkt',MFRESH=2*60e3;// cotações atualizam a cada 2 min enquanto o app está aberto
 let MK={};try{MK=JSON.parse(localStorage.getItem(MKEY)||'{}')||{}}catch(e){MK={}}
 let mkLoading=false;
 const ysym=s=>s.startsWith('^')?s:s+'.SA';
@@ -987,7 +987,10 @@ const BRL4=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimu
 const PTS=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
 const pct=v=>v==null||isNaN(v)?'':`${v>0?'▲':v<0?'▼':''} ${Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}%`;
 const cls=v=>v>0?'up':v<0?'dn':'muted';
-async function getJSON(url,direct=true){return JSON.parse(await viaProxies(url,direct))}
+// alguns proxies devolvem o JSON embrulhado numa página HTML (<pre>…</pre>): desembrulha antes de ler
+function parseJSONLoose(t){t=String(t||'').trim();try{return JSON.parse(t)}catch(e){}
+  const txt=new DOMParser().parseFromString(t,'text/html').body.textContent.trim();const i=txt.search(/[{[]/);if(i<0)throw new Error('não é JSON');return JSON.parse(txt.slice(i))}
+async function getJSON(url,direct=true){return parseJSONLoose(await viaProxies(url,direct))}
 async function loadFX(){const j=await getJSON(`https://economia.awesomeapi.com.br/json/last/${FX.map(f=>f[0]+'-BRL').join(',')}`);const r={};
   for(const[c]of FX){const x=j[c+'BRL'];if(x)r[c]={p:+x.bid,c:+x.pctChange,t:(+x.timestamp||0)*1000}}if(!Object.keys(r).length)throw 0;return r}
 function fromMeta(m){const p=+m.regularMarketPrice,prev=+(m.chartPreviousClose||m.previousClose);return p?{p,c:prev?(p/prev-1)*100:null,t:(+m.regularMarketTime||0)*1000}:null}
@@ -996,9 +999,11 @@ async function loadStocks(){const syms=[IDX[0],...STOCKS.map(s=>s[0])].map(ysym)
     for(const x of (j.spark&&j.spark.result)||[]){const m=x.response&&x.response[0]&&x.response[0].meta;const q=m&&fromMeta(m);if(q)r[x.symbol]=q}}catch(e){}
   const miss=syms.filter(s=>!r[s]);
   await Promise.all(miss.map(async s=>{try{const j=await getJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=1d&interval=1d`,false);
-    const q=fromMeta(j.chart.result[0].meta);if(q)r[s]=q}catch(e){}
-    if(!r[s]&&!s.startsWith('^'))try{const j=await getJSON(`https://brapi.dev/api/quote/${s.replace('.SA','')}`);const x=j.results[0];
-      r[s]={p:+x.regularMarketPrice,c:+x.regularMarketChangePercent,t:Date.parse(x.regularMarketTime)||Date.now()}}catch(e){}}));
+    const q=fromMeta(j.chart.result[0].meta);if(q)r[s]=q}catch(e){}}));
+  // plano C: brapi, numa única chamada para todas as que ainda faltam
+  const left=syms.filter(s=>!r[s]&&!s.startsWith('^'));
+  if(left.length)try{const j=await getJSON(`https://brapi.dev/api/quote/${left.map(s=>s.replace('.SA','')).join(',')}`);
+    for(const x of j.results||[])if(+x.regularMarketPrice)r[x.symbol+'.SA']={p:+x.regularMarketPrice,c:+x.regularMarketChangePercent,t:Date.parse(x.regularMarketTime)||Date.now()}}catch(e){}
   if(!Object.keys(r).length)throw 0;return r}
 async function marketRefresh(force){
   if(mkLoading||(!force&&MK.at&&Date.now()-MK.at<MFRESH)||(!force&&Date.now()-(MK.tried||0)<60e3))return;
@@ -1241,7 +1246,7 @@ setTimeout(newsWarm,2500);
 if(S.settings.pinHash)showLock();
 check();setInterval(check,20000);
 setInterval(()=>{if(!document.hidden&&!$('#layer').classList.contains('on')&&ui.tab==='home'&&document.activeElement!==$('#qaIn'))render()},60000);
-setInterval(()=>{if(!document.hidden&&ui.tab==='home')marketRefresh(false)},60000);
+setInterval(()=>{if(!document.hidden)marketRefresh(false)},20000);// confere a cada 20 s; só busca quando os dados passam de 2 min
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator&&!inFrame&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{});
   navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.go)A.tab({tab:e.data.go})})}
